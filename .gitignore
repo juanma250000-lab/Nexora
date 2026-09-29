@@ -3,3 +3,7 @@ dist/
 .env
 .env.*
 !.env.example
+scripts/.render-smoke.cjs
+scripts/.unit-tests.cjs
+scripts/.live-check.cjs
+scripts/.live-check.jsx
