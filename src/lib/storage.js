@@ -78,6 +78,26 @@ export function saveFxCache(rate, updatedAt) {
   }
 }
 
+/** Drops records a previous version or a manual edit could have left malformed. */
+function isActivityRecord(item) {
+  return (
+    item !== null &&
+    typeof item === 'object' &&
+    typeof item.id === 'string' &&
+    (item.type === 'buy' || item.type === 'sell') &&
+    Number.isFinite(item.quantity) &&
+    Number.isFinite(item.total)
+  );
+}
+
+/** Keeps only finite, non-negative coin balances. */
+function sanitizeBalances(balances) {
+  if (!balances || typeof balances !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(balances).filter(([, amount]) => Number.isFinite(amount) && amount >= 0)
+  );
+}
+
 export function readDemoPortfolio() {
   let value = null;
   try {
@@ -86,9 +106,9 @@ export function readDemoPortfolio() {
     value = null;
   }
   return {
-    balances: { ...INITIAL_BALANCES, ...(value?.balances || {}) },
+    balances: { ...INITIAL_BALANCES, ...sanitizeBalances(value?.balances) },
     cash: Number.isFinite(value?.cash) ? value.cash : INITIAL_CASH,
-    activity: Array.isArray(value?.activity) ? value.activity : [],
+    activity: Array.isArray(value?.activity) ? value.activity.filter(isActivityRecord) : [],
   };
 }
 

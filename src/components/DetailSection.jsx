@@ -2,9 +2,10 @@ import { memo, useMemo } from 'react';
 import { CircleHelp } from 'lucide-react';
 import { formatCOP } from '../lib/format';
 import { useCoinHistory } from '../hooks/useCoinHistory';
-import { Change, CoinIcon, Sparkline } from './primitives';
+import { Change, CoinIcon, LiveBadge, Sparkline } from './primitives';
+import { SectionHeading } from './SectionHeading';
 
-function DetailSectionImpl({ coin, usdCopRate }) {
+function DetailSectionImpl({ coin, usdCopRate, isLive = true }) {
   const { series, status } = useCoinHistory(coin, usdCopRate);
   const history = series || [];
 
@@ -15,38 +16,45 @@ function DetailSectionImpl({ coin, usdCopRate }) {
     [coin, series]
   );
 
+  const range = useMemo(() => {
+    const clean = history.filter(Number.isFinite);
+    if (!clean.length) return { high: coin?.price || 0, low: coin?.price || 0 };
+    return { high: Math.max(...clean), low: Math.min(...clean) };
+  }, [history, coin?.price]);
+
   return (
     <section className="nx-section nx-detail-section" id="detalle" aria-labelledby="nx-detail-title">
-      <div className="nx-detail-heading">
-        <div>
-          <span className="nx-section-index">02 / ANALIZAR</span>
-          <h2 id="nx-detail-title">Conoce cada movimiento.</h2>
-          <p>Historial real de precios disponible para los últimos siete días.</p>
-        </div>
-
+      <SectionHeading
+        index="02 · Analizar"
+        titleId="nx-detail-title"
+        title="Conoce cada movimiento."
+        description="Historial real de precios disponible para los últimos siete días."
+      >
         {coin && (
           <div className="nx-detail-current">
             <CoinIcon coin={coin} />
-            <span>
+            <span className="nx-detail-current-name">
               <b>{coin.name}</b>
               <small>{coin.symbol}</small>
             </span>
-            <strong>{formatCOP(coin.price)}</strong>
-            <Change value={coin.change24h} />
+            <span className="nx-detail-current-quote">
+              <strong>{formatCOP(coin.price)}</strong>
+              <Change value={coin.change24h} />
+            </span>
           </div>
         )}
-      </div>
+      </SectionHeading>
 
       <div className="nx-detail-layout">
-        <div className="nx-chart-panel">
-          <div className="nx-chart-panel-head">
+        <div className="nx-panel nx-chart-panel">
+          <div className="nx-panel-head">
             <div>
-              <span>EVOLUCIÓN DEL PRECIO</span>
+              <p className="nx-eyebrow is-muted">Evolución del precio</p>
               <h3>
                 {coin?.name || 'Mercado'} <small>/ COP</small>
               </h3>
             </div>
-            <span className="nx-chart-period">7 DÍAS</span>
+            <span className="nx-pill is-accent">7 días</span>
           </div>
 
           <div className="nx-history-chart">
@@ -61,38 +69,42 @@ function DetailSectionImpl({ coin, usdCopRate }) {
             )}
           </div>
 
-          <div className="nx-chart-axis" aria-hidden="true">
-            <span>HACE 7 DÍAS</span>
-            <span>HACE 5 DÍAS</span>
-            <span>HACE 3 DÍAS</span>
-            <span>AHORA</span>
+          <div className="nx-chart-labels" aria-hidden="true">
+            <span>Hace 7 días</span>
+            <span>Hace 5 días</span>
+            <span>Hace 3 días</span>
+            <span>Ahora</span>
           </div>
         </div>
 
-        <div className="nx-data-rail">
-          <div className="nx-data-rail-head">
-            <span>DATOS DEL ACTIVO</span>
-            <span className="nx-data-indicator">
-              <i aria-hidden="true" /> EN VIVO
-            </span>
+        <div className="nx-panel nx-data-rail">
+          <div className="nx-panel-head">
+            <p className="nx-eyebrow is-muted">Datos del activo</p>
+            <LiveBadge isLive={isLive} />
           </div>
 
-          <div className="nx-data-cell">
-            <span>Variación · 24 h</span>
-            <Change value={coin?.change24h || 0} />
-          </div>
-          <div className="nx-data-cell">
-            <span>Variación · 7 días</span>
-            <Change value={coin?.change7d || 0} />
-          </div>
-          <div className="nx-data-cell">
-            <span>Precio máximo visible</span>
-            <b>{formatCOP(history.length ? Math.max(...history) : coin?.price || 0)}</b>
-          </div>
-          <div className="nx-data-cell">
-            <span>Precio mínimo visible</span>
-            <b>{formatCOP(history.length ? Math.min(...history) : coin?.price || 0)}</b>
-          </div>
+          <dl className="nx-data-list">
+            <div>
+              <dt>Variación · 24 h</dt>
+              <dd>
+                <Change value={coin?.change24h || 0} />
+              </dd>
+            </div>
+            <div>
+              <dt>Variación · 7 días</dt>
+              <dd>
+                <Change value={coin?.change7d || 0} />
+              </dd>
+            </div>
+            <div>
+              <dt>Máximo en 7 días</dt>
+              <dd>{formatCOP(range.high)}</dd>
+            </div>
+            <div>
+              <dt>Mínimo en 7 días</dt>
+              <dd>{formatCOP(range.low)}</dd>
+            </div>
+          </dl>
 
           <p className="nx-data-note">
             <CircleHelp size={15} aria-hidden="true" /> Datos de mercado; no constituyen asesoría

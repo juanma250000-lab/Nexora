@@ -1,69 +1,68 @@
 /* ==========================================================================
    NEXORA — Design tokens
    Single source of truth for colour, type, spacing, radius, elevation and
-   motion. Component styles must consume these instead of raw values.
+   motion. Component styles consume these instead of raw values.
    ========================================================================== */
 
 :root {
   color-scheme: dark;
 
-  /* ---- Palette: base surfaces ------------------------------------------ */
-  --nx-bg: #06080d;
-  --nx-bg-soft: #090d15;
-  --nx-surface: #101827;
-  --nx-surface-2: #141d2e;
-  --nx-surface-3: #1a2437;
+  /* ---- Surfaces --------------------------------------------------------- *
+   * Layered, opaque surfaces instead of stacked glass: they read as depth,
+   * keep text contrast predictable and avoid the cost of many large
+   * backdrop-filter layers. Blur is reserved for the floating chrome.      */
+  --nx-bg: #07090e;
+  --nx-bg-raised: #0a0d14;
+  --nx-surface-1: #0e121b;
+  --nx-surface-2: #121826;
+  --nx-surface-3: #18202f;
+  --nx-surface-hover: #1b2435;
+  --nx-field: #090c13;
+  --nx-chrome: rgba(9, 12, 19, 0.78);
 
-  /* ---- Palette: glass (liquid-glass accent) ---------------------------- */
-  --nx-glass: rgba(20, 29, 44, 0.66);
-  --nx-glass-strong: rgba(15, 22, 34, 0.9);
-  --nx-glass-tint: rgba(148, 176, 214, 0.06);
-  --nx-glass-line: rgba(196, 216, 240, 0.16);
-  --nx-glass-highlight: rgba(255, 255, 255, 0.08);
-  --nx-blur: blur(24px) saturate(150%);
+  /* ---- Lines ------------------------------------------------------------ */
+  --nx-line-soft: rgba(148, 170, 204, 0.08);
+  --nx-line: rgba(148, 170, 204, 0.14);
+  --nx-line-strong: rgba(148, 170, 204, 0.26);
 
-  /* ---- Palette: lines -------------------------------------------------- */
-  --nx-line: rgba(163, 185, 216, 0.14);
-  --nx-line-soft: rgba(163, 185, 216, 0.08);
-  --nx-line-strong: rgba(163, 185, 216, 0.26);
+  /* ---- Text (contrast measured on --nx-surface-1) ----------------------- */
+  --nx-ink: #eef2f8;     /* 16.7:1 */
+  --nx-ink-2: #c9d2df;   /* 12.3:1 */
+  --nx-muted: #97a3b6;   /*  7.3:1 */
+  --nx-dim: #7d899c;     /*  5.3:1 */
 
-  /* ---- Palette: text --------------------------------------------------- */
-  --nx-ink: #f2f5fa;
-  --nx-ink-2: #d5dde9;
-  --nx-muted: #96a2b6;
-  --nx-dim: #7b8798;
-
-  /* ---- Palette: accents ------------------------------------------------ */
-  --nx-cyan: #7df0cb;
-  --nx-blue: #7cb2ff;
-  --nx-lime: #c9f58c;
-  --nx-up: #5fe3ae;
-  --nx-down: #ff8590;
-  --nx-warning: #f0c07a;
-  --nx-on-accent: #08201a;
-
-  --nx-accent-gradient: linear-gradient(115deg, #a3edce, #b8f4d5 58%, #c7f2b5);
+  /* ---- Brand + semantic ------------------------------------------------- */
+  --nx-accent: #7df0cb;
+  --nx-accent-strong: #5fdcb3;
+  --nx-accent-ink: #b9f6e2;
+  --nx-on-accent: #03140e;
   --nx-accent-soft: rgba(125, 240, 203, 0.1);
+  --nx-accent-line: rgba(125, 240, 203, 0.32);
+
+  --nx-blue: #8bb8ff;
+  --nx-up: #5fe3ae;
+  --nx-down: #ff8a94;
+  --nx-warning: #f2c27d;
   --nx-up-soft: rgba(95, 227, 174, 0.12);
-  --nx-down-soft: rgba(255, 133, 144, 0.12);
-  --nx-warning-soft: rgba(240, 192, 122, 0.1);
+  --nx-down-soft: rgba(255, 138, 148, 0.12);
+  --nx-warning-soft: rgba(242, 194, 125, 0.1);
 
-  /* ---- Typography ------------------------------------------------------ */
-  --nx-font-sans: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --nx-font-mono: 'DM Mono', 'Cascadia Code', ui-monospace, 'SFMono-Regular', monospace;
+  /* ---- Typography ------------------------------------------------------- */
+  --nx-font-sans: 'Manrope Variable', 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --nx-font-mono: 'DM Mono', 'Cascadia Code', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  --nx-fs-3xs: 10px;  /* decorative chart ticks only */
-  --nx-fs-2xs: 11px;  /* mono eyebrows */
-  --nx-fs-xs: 12px;   /* dense labels */
-  --nx-fs-sm: 13px;   /* secondary copy */
-  --nx-fs-base: 14.5px;
-  --nx-fs-md: 16px;
-  --nx-fs-lg: 19px;
-  --nx-fs-xl: 24px;
-  --nx-fs-2xl: 30px;
-  --nx-fs-3xl: 38px;
-  --nx-fs-4xl: 48px;
-  --nx-fs-hero: 64px;
+  /* rem-based so the whole interface follows the reader's font size. */
+  --nx-fs-3xs: 0.6875rem; /* 11px — mono eyebrows, chart ticks */
+  --nx-fs-2xs: 0.75rem;   /* 12px — dense labels */
+  --nx-fs-xs: 0.8125rem;  /* 13px — secondary copy */
+  --nx-fs-sm: 0.875rem;   /* 14px */
+  --nx-fs-base: 0.9375rem;/* 15px — body */
+  --nx-fs-md: 1rem;
+  --nx-fs-lg: 1.1875rem;
+  --nx-fs-xl: 1.5rem;
+  --nx-fs-2xl: 1.875rem;
+  --nx-fs-h2: clamp(1.75rem, 1.25rem + 1.9vw, 2.625rem);
+  --nx-fs-hero: clamp(2.375rem, 1.35rem + 4.1vw, 4.375rem);
 
   --nx-fw-regular: 400;
   --nx-fw-medium: 500;
@@ -71,15 +70,16 @@
   --nx-fw-bold: 700;
   --nx-fw-extrabold: 800;
 
-  --nx-lh-tight: 1.1;
-  --nx-lh-snug: 1.35;
-  --nx-lh-normal: 1.6;
-  --nx-lh-relaxed: 1.8;
+  --nx-lh-tight: 1.06;
+  --nx-lh-snug: 1.3;
+  --nx-lh-normal: 1.55;
+  --nx-lh-relaxed: 1.7;
 
+  --nx-tracking-tight: -0.03em;
+  --nx-tracking-mono: 0.08em;
   --nx-tracking-wide: 0.14em;
-  --nx-tracking-mono: 0.1em;
 
-  /* ---- Spacing --------------------------------------------------------- */
+  /* ---- Spacing (4px base) ------------------------------------------------ */
   --nx-space-1: 4px;
   --nx-space-2: 8px;
   --nx-space-3: 12px;
@@ -87,40 +87,40 @@
   --nx-space-5: 24px;
   --nx-space-6: 32px;
   --nx-space-7: 48px;
-  --nx-space-8: 72px;
-  --nx-space-9: 104px;
+  --nx-space-8: 64px;
+  --nx-space-9: 96px;
+  --nx-section-y: clamp(64px, 8vw, 112px);
 
-  /* ---- Radius ---------------------------------------------------------- */
+  /* ---- Radius ------------------------------------------------------------ */
   --nx-r-xs: 6px;
-  --nx-r-sm: 9px;
-  --nx-r-md: 13px;
-  --nx-r-lg: 18px;
-  --nx-r-xl: 24px;
+  --nx-r-sm: 10px;
+  --nx-r-md: 14px;
+  --nx-r-lg: 20px;
   --nx-r-pill: 999px;
 
-  /* ---- Elevation ------------------------------------------------------- */
-  --nx-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.32);
-  --nx-shadow-2: 0 14px 38px rgba(0, 0, 0, 0.34);
-  --nx-shadow-3: 0 30px 90px rgba(0, 0, 0, 0.52);
-  --nx-shadow-accent: 0 12px 32px rgba(96, 214, 175, 0.18);
-  --nx-inset-hi: inset 0 1px rgba(255, 255, 255, 0.09);
+  /* ---- Elevation --------------------------------------------------------- */
+  --nx-inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --nx-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --nx-shadow-2: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  --nx-shadow-3: 0 32px 80px -24px rgba(0, 0, 0, 0.75);
 
-  /* ---- Motion ---------------------------------------------------------- */
+  /* ---- Motion ------------------------------------------------------------ */
   --nx-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --nx-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --nx-dur-fast: 140ms;
   --nx-dur: 220ms;
-  --nx-dur-slow: 460ms;
+  --nx-dur-slow: 420ms;
 
-  /* ---- Layout ---------------------------------------------------------- */
-  --nx-container: 1240px;
-  --nx-gutter: 40px;
-  --nx-header-height: 68px;
+  /* ---- Layout ------------------------------------------------------------ */
+  --nx-container: 1200px;
+  --nx-gutter: clamp(16px, 4vw, 40px);
+  --nx-header-height: 64px;
+  --nx-scroll-offset: calc(var(--nx-header-height) + 24px);
+  --nx-mobile-nav-space: 0px;
+
   --nx-z-header: 40;
+  --nx-z-menu: 45;
   --nx-z-mobile-nav: 50;
   --nx-z-toast: 80;
   --nx-z-modal: 90;
-
-  /* ---- Focus ----------------------------------------------------------- */
-  --nx-focus-ring: 0 0 0 2px var(--nx-bg), 0 0 0 4px var(--nx-cyan);
 }

@@ -2,6 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { INITIAL_CASH, INITIAL_BALANCES, TOAST_DURATION_MS } from '../lib/constants';
 import { readDemoPortfolio, saveDemoPortfolio } from '../lib/storage';
 
+/** Short, human-readable reference that stays unique within the session. */
+let sequence = 0;
+function nextRecordId() {
+  sequence = (sequence + 1) % 100;
+  return `NX-${Date.now().toString().slice(-7)}${String(sequence).padStart(2, '0')}`;
+}
+
 /**
  * Demo portfolio state: fiat balance, coin balances and the local activity log.
  * Everything is persisted to localStorage and never leaves the device.
@@ -21,7 +28,7 @@ export function useDemoPortfolio() {
     if (!coin) return null;
 
     const record = {
-      id: `NX-${Date.now().toString().slice(-7)}`,
+      id: nextRecordId(),
       coinId: coin.id,
       name: coin.name,
       symbol: coin.symbol,

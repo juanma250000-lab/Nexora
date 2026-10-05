@@ -1,6 +1,6 @@
 /* ==========================================================================
    NEXORA — Base layer
-   Reset, document defaults and global utilities.
+   Reset, document defaults, focus treatment and global utilities.
    ========================================================================== */
 
 *,
@@ -11,19 +11,17 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: var(--nx-header-height);
   -webkit-text-size-adjust: 100%;
-}
-
-html,
-body,
-#root {
-  margin: 0;
-  min-height: 100%;
+  text-size-adjust: 100%;
+  background: var(--nx-bg);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip;
   background: var(--nx-bg);
   color: var(--nx-ink);
   font-family: var(--nx-font-sans);
@@ -33,15 +31,24 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h1,
 h2,
 h3,
 h4,
-p {
+p,
+ul,
+ol,
+figure {
   margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
 }
 
 button,
@@ -50,6 +57,7 @@ select,
 textarea {
   font: inherit;
   color: inherit;
+  letter-spacing: inherit;
 }
 
 button {
@@ -57,13 +65,20 @@ button {
   background: none;
   border: 0;
   padding: 0;
+  transition: color var(--nx-dur-fast) var(--nx-ease),
+    background-color var(--nx-dur-fast) var(--nx-ease),
+    border-color var(--nx-dur-fast) var(--nx-ease),
+    box-shadow var(--nx-dur) var(--nx-ease),
+    transform var(--nx-dur-fast) var(--nx-ease),
+    opacity var(--nx-dur-fast) var(--nx-ease);
 }
 
 button:disabled {
   cursor: not-allowed;
 }
 
-img {
+img,
+svg {
   display: block;
   max-width: 100%;
 }
@@ -73,8 +88,18 @@ a {
   text-decoration: none;
 }
 
+b,
+strong {
+  font-weight: var(--nx-fw-semibold);
+}
+
+/* Focus: one visible, high-contrast ring for every interactive element. */
+:focus {
+  outline: none;
+}
+
 :focus-visible {
-  outline: 2px solid var(--nx-cyan);
+  outline: 2px solid var(--nx-accent);
   outline-offset: 3px;
   border-radius: var(--nx-r-xs);
 }
@@ -88,12 +113,12 @@ a {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(150, 170, 200, 0.28) transparent;
+  scrollbar-color: rgba(150, 170, 200, 0.26) transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
 }
 
 *::-webkit-scrollbar-track {
@@ -101,14 +126,14 @@ a {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(150, 170, 200, 0.24);
-  border: 2px solid transparent;
+  background: rgba(150, 170, 200, 0.22);
+  border: 3px solid transparent;
   background-clip: padding-box;
   border-radius: var(--nx-r-pill);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(150, 170, 200, 0.42);
+  background: rgba(150, 170, 200, 0.4);
   background-clip: padding-box;
 }
 
@@ -127,8 +152,70 @@ a {
   border: 0;
 }
 
-/* Motion preference ------------------------------------------------------- */
+.nx-skip-link {
+  position: fixed;
+  z-index: calc(var(--nx-z-modal) + 1);
+  top: 12px;
+  left: 12px;
+  padding: 10px 16px;
+  border-radius: var(--nx-r-sm);
+  background: var(--nx-accent);
+  color: var(--nx-on-accent);
+  font-size: var(--nx-fs-sm);
+  font-weight: var(--nx-fw-bold);
+  transform: translateY(-160%);
+}
 
+.nx-skip-link:focus-visible {
+  transform: none;
+}
+
+.nx-up {
+  color: var(--nx-up);
+}
+
+.nx-down {
+  color: var(--nx-down);
+}
+
+/* Motion ------------------------------------------------------------------- */
+
+@keyframes nx-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nx-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nx-pulse {
+  to {
+    opacity: 0.45;
+  }
+}
+
+@keyframes nx-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Reduced motion: keep state changes, drop movement. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

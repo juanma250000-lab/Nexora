@@ -1,0 +1,14 @@
+{
+  "name": "NEXORA · Finanzas digitales en movimiento",
+  "short_name": "NEXORA",
+  "description": "Explora el mercado de criptomonedas en pesos colombianos y simula operaciones sin dinero real.",
+  "lang": "es-CO",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07090e",
+  "theme_color": "#07090e",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

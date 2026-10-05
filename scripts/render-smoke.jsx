@@ -135,6 +135,11 @@ const checks = [
   ['no undefined leaked', !markup.includes('>undefined<')],
   ['no NaN leaked', !markup.includes('NaN')],
   ['no [object Object] leaked', !markup.includes('[object Object]')],
+  ['skip link to the content', markup.includes('href="#contenido"') && markup.includes('id="contenido"')],
+  ['navigation uses real in-page links', ['#inicio', '#mercado', '#comprar', '#vender', '#portafolio', '#actividad'].every((hash) => markup.includes(`href="${hash}"`))],
+  ['privacy link reaches the legal notice', markup.includes('href="#legal"')],
+  ['portfolio can be reset', markup.includes('Restablecer portafolio de prueba')],
+  ['external links open safely', !/target="_blank"(?![^>]*rel="noopener noreferrer")/.test(markup)],
 
   /* rate limited ---------------------------------------------------- */
   ['rate limit blames the provider', rateLimited.includes('limitando las consultas temporales')],

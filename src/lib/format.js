@@ -4,23 +4,58 @@
  * money and dates the same way.
  */
 
+/*
+ * Intl.NumberFormat construction is expensive and these helpers run for every
+ * market row on every refresh, so the formatters are built once and reused.
+ */
+const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+const COP_SMALL_FORMATTER = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 8,
+});
+const CRYPTO_FORMATTERS = new Map();
+
 export function formatCOP(value) {
   const safe = Number.isFinite(value) ? value : 0;
-  const small = Math.abs(safe) < 1;
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: small ? 2 : 0,
-    maximumFractionDigits: small ? 8 : 0,
-  }).format(safe);
+  // Sub-peso prices (many small-cap tokens) keep their decimals; zero does not.
+  const isFraction = safe !== 0 && Math.abs(safe) < 1;
+  return (isFraction ? COP_SMALL_FORMATTER : COP_FORMATTER).format(safe);
 }
 
 export function formatCrypto(value, maximumFractionDigits = 6) {
   const safe = Number.isFinite(value) ? value : 0;
-  return new Intl.NumberFormat('es-CO', {
-    maximumFractionDigits,
-    minimumFractionDigits: 0,
-  }).format(safe);
+  let formatter = CRYPTO_FORMATTERS.get(maximumFractionDigits);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('es-CO', { maximumFractionDigits, minimumFractionDigits: 0 });
+    CRYPTO_FORMATTERS.set(maximumFractionDigits, formatter);
+  }
+  return formatter.format(safe);
+}
+
+const PERCENT_FORMATTERS = new Map();
+
+/**
+ * Unsigned percentage with the Colombian decimal comma ("1,40 %").
+ * Formatters are cached per precision: this runs for every market row.
+ */
+export function formatPercent(value, fractionDigits = 2) {
+  const safe = Number.isFinite(value) ? Math.abs(value) : 0;
+  let formatter = PERCENT_FORMATTERS.get(fractionDigits);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
+    PERCENT_FORMATTERS.set(fractionDigits, formatter);
+  }
+  return `${formatter.format(safe)} %`;
 }
 
 export function formatClock(date) {
@@ -29,7 +64,10 @@ export function formatClock(date) {
 }
 
 export function formatTimestamp(isoValue) {
-  return new Date(isoValue).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+  const date = new Date(isoValue);
+  // A corrupted local record must not print "Invalid Date" in the UI.
+  if (Number.isNaN(date.getTime())) return 'Fecha no disponible';
+  return date.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 export function toLowerCaseLocale(value) {

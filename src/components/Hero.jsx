@@ -1,8 +1,9 @@
 import { memo, useMemo } from 'react';
-import { Activity, ArrowRight, ArrowUpRight, ShieldCheck } from 'lucide-react';
-import { formatCOP } from '../lib/format';
+import { Activity, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { formatCOP, formatPercent } from '../lib/format';
 import { useCoinHistory } from '../hooks/useCoinHistory';
-import { ACCENT_COLOR, Change, CoinIcon, Sparkline } from './primitives';
+import { NavAnchor } from './NavAnchor';
+import { ACCENT_COLOR, Change, CoinIcon, LiveBadge, Sparkline } from './primitives';
 
 function HeroImpl({
   liveLabel,
@@ -24,24 +25,21 @@ function HeroImpl({
     () => (heroCoin && series ? { ...heroCoin, history: series } : heroCoin),
     [heroCoin, series]
   );
+  const isOffline = marketState === 'sin-conexion';
+  const rising = dayChangeCOP >= 0;
 
   return (
-    <section className="nx-hero nx-section" id="inicio" aria-labelledby="nx-hero-title">
+    <section className="nx-hero" id="inicio" aria-labelledby="nx-hero-title">
       <div className="nx-hero-copy">
         <p className="nx-kicker">
-          <span
-            className={`nx-live-dot ${marketState === 'sin-conexion' ? 'is-offline' : ''}`.trim()}
-            aria-hidden="true"
-          />
-          {liveLabel}
+          <span className={`nx-live-dot ${isOffline ? 'is-offline' : ''}`.trim()} aria-hidden="true" />
+          <span>{liveLabel}</span>
           <span className="nx-kicker-divider" aria-hidden="true" />
-          COP · {updatedAtLabel}
+          <span>COP · {updatedAtLabel}</span>
         </p>
 
         <h1 id="nx-hero-title">
-          Una nueva forma
-          <br />
-          de ver <span>tu futuro.</span>
+          Una nueva forma de ver <span className="nx-hero-accent">tu futuro.</span>
         </h1>
 
         <p className="nx-hero-description">
@@ -50,38 +48,51 @@ function HeroImpl({
         </p>
 
         <div className="nx-hero-actions">
-          <button className="nx-button nx-button-primary" type="button" onClick={() => onNavigate('mercado')}>
+          <NavAnchor
+            className="nx-button nx-button-primary nx-button-lg"
+            target="mercado"
+            onNavigate={onNavigate}
+          >
             Explorar mercado <ArrowRight size={17} aria-hidden="true" />
-          </button>
-          <button className="nx-button nx-button-quiet" type="button" onClick={onOpenAuth}>
-            Crear cuenta de prueba <ArrowUpRight size={16} aria-hidden="true" />
+          </NavAnchor>
+          <button className="nx-button nx-button-secondary nx-button-lg" type="button" onClick={onOpenAuth}>
+            <Sparkles size={16} aria-hidden="true" /> Crear cuenta de prueba
           </button>
         </div>
 
-        <p className="nx-proof-line">
-          <ShieldCheck size={15} aria-hidden="true" /> Solo simulación · Sin movimientos de dinero
-          real
-        </p>
+        <ul className="nx-hero-facts" aria-label="Lo que ofrece NEXORA">
+          <li>
+            <b>{visibleAssets || '—'}</b>
+            <span>activos con precio en COP</span>
+          </li>
+          <li>
+            <b>30 s</b>
+            <span>entre cada actualización</span>
+          </li>
+          <li>
+            <b>$0</b>
+            <span>de dinero real en juego</span>
+          </li>
+        </ul>
       </div>
 
-      <div className="nx-market-orbit" role="group" aria-label="Vista previa del mercado">
-        <div className="nx-hero-market-glass">
-          <div className="nx-preview-topline">
-            <span>Vista del mercado</span>
-            <span className="nx-preview-live">
-              <i aria-hidden="true" /> EN VIVO
-            </span>
+      <div className="nx-hero-visual">
+        <div className="nx-hero-card" role="group" aria-labelledby="nx-hero-card-title">
+          <div className="nx-hero-card-top">
+            <span id="nx-hero-card-title">Tu portafolio de prueba</span>
+            <LiveBadge isLive={marketState === 'en-vivo'} hasData={visibleAssets > 0} />
           </div>
 
-          <p className="nx-preview-total-label">Tu portafolio de prueba</p>
-          <p className="nx-preview-total">{formatCOP(portfolioValue)}</p>
-
-          <p className="nx-preview-performance">
-            <span className={dayChangeCOP >= 0 ? 'nx-up' : 'nx-down'}>
-              {dayChangeCOP >= 0 ? '+' : ''}
+          <p className="nx-hero-total">{formatCOP(portfolioValue)}</p>
+          <p className="nx-hero-performance">
+            <span className={rising ? 'nx-up' : 'nx-down'}>
+              {rising ? '+' : ''}
               {formatCOP(dayChangeCOP)}
             </span>
-            <span className="nx-caption"> hoy · {portfolioChange.toFixed(2)}%</span>
+            <span>
+              hoy · {portfolioChange >= 0 ? '+' : '−'}
+              {formatPercent(portfolioChange)}
+            </span>
           </p>
 
           <div className="nx-hero-chart">
@@ -93,54 +104,48 @@ function HeroImpl({
                 emptyLabel={status === 'cargando' ? 'Cargando gráfico…' : 'Gráfico en preparación'}
               />
             ) : (
-              <div className="nx-chart-loading" role="status" aria-label="Cargando el gráfico del mercado">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
+              <div className="nx-chart-loading" role="status">
+                <span className="nx-sr-only">Cargando el gráfico del mercado</span>
+                {Array.from({ length: 8 }, (_, index) => (
+                  <span key={index} aria-hidden="true" />
+                ))}
               </div>
             )}
           </div>
-
-          <div className="nx-preview-chart-labels">
-            <span>HACE 7 DÍAS</span>
-            <span>AHORA</span>
+          <div className="nx-chart-labels" aria-hidden="true">
+            <span>{heroCoin ? `${heroCoin.symbol} · hace 7 días` : 'Hace 7 días'}</span>
+            <span>Ahora</span>
           </div>
 
-          <div className="nx-preview-coins">
+          <ul className="nx-hero-coins" aria-label="Activos destacados">
             {topCoins.slice(0, 3).map((coin) => (
-              <button
-                className="nx-preview-coin"
-                type="button"
-                key={coin.id}
-                onClick={() => onSelectAsset(coin.id)}
-              >
-                <CoinIcon coin={coin} />
-                <span className="nx-preview-coin-name">
-                  <b>{coin.symbol}</b>
-                  <small>{formatCOP(coin.price)}</small>
-                </span>
-                <Change value={coin.change24h} />
-              </button>
+              <li key={coin.id}>
+                <button
+                  className="nx-hero-coin"
+                  type="button"
+                  onClick={() => onSelectAsset(coin.id)}
+                >
+                  <CoinIcon coin={coin} />
+                  <span className="nx-hero-coin-copy">
+                    <b>{coin.symbol}</b>
+                    <small>{formatCOP(coin.price)}</small>
+                  </span>
+                  <Change value={coin.change24h} />
+                </button>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
 
-        <div className="nx-floating-note">
-          <span className="nx-note-icon">
-            <Activity size={15} aria-hidden="true" />
-          </span>
-          <span>
-            <b>Mercado activo</b>
-            <small>{visibleAssets} activos visibles</small>
-          </span>
+          <p className="nx-hero-card-foot">
+            <Activity size={14} aria-hidden="true" />
+            <span>
+              {visibleAssets ? `${visibleAssets} activos visibles` : 'Conectando al mercado'}
+            </span>
+            <span className="nx-hero-card-foot-sep" aria-hidden="true" />
+            <ShieldCheck size={14} aria-hidden="true" />
+            <span>Solo simulación</span>
+          </p>
         </div>
-
-        <p className="nx-orbit-caption">DATOS ACTUALIZADOS CADA 30 S</p>
       </div>
     </section>
   );

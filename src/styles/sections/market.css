@@ -1,0 +1,535 @@
+/* ==========================================================================
+   Market table + selected asset
+   ========================================================================== */
+
+.nx-market-section {
+  --nx-market-cols: minmax(160px, 1.4fr) minmax(120px, 1fr) 76px 100px minmax(170px, 1.2fr) 32px;
+}
+
+.nx-market-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: var(--nx-space-5);
+}
+
+.nx-market-panel {
+  overflow: hidden;
+}
+
+.nx-market-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-3);
+  padding: 14px var(--nx-space-4);
+  border-bottom: 1px solid var(--nx-line-soft);
+}
+
+.nx-market-toolbar .nx-search {
+  width: min(340px, 100%);
+}
+
+.nx-toolbar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nx-space-2) var(--nx-space-3);
+}
+
+.nx-result-count {
+  color: var(--nx-dim);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-3xs);
+  white-space: nowrap;
+}
+
+.nx-market-head,
+.nx-market-row,
+.nx-skeleton-row {
+  display: grid;
+  grid-template-columns: var(--nx-market-cols);
+  align-items: center;
+  gap: var(--nx-space-3);
+  padding-inline: var(--nx-space-4);
+}
+
+.nx-market-head {
+  height: 40px;
+  border-bottom: 1px solid var(--nx-line-soft);
+  background: var(--nx-bg-raised);
+  color: var(--nx-dim);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-3xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nx-market-head > span:not(:first-child) {
+  text-align: right;
+}
+
+.nx-market-head > span:first-child {
+  padding-left: 36px;
+}
+
+.nx-market-scroll {
+  max-height: 640px;
+  overflow-y: auto;
+}
+
+.nx-market-row {
+  position: relative;
+  min-height: 62px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--nx-line-soft);
+  cursor: pointer;
+  transition: background-color var(--nx-dur-fast) var(--nx-ease);
+  /* 250 rows per page: let the browser skip layout and paint for the ones
+     scrolled out of view. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 62px;
+}
+
+.nx-market-row:last-child {
+  border-bottom: 0;
+}
+
+.nx-market-row:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.nx-market-row.is-selected {
+  background: rgba(125, 240, 203, 0.06);
+}
+
+.nx-market-row.is-selected::before {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--nx-accent);
+  content: '';
+}
+
+.nx-market-asset {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+  border-radius: var(--nx-r-xs);
+  text-align: left;
+}
+
+.nx-rank {
+  width: 24px;
+  flex: 0 0 auto;
+  color: var(--nx-dim);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-3xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.nx-asset-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.nx-asset-copy b {
+  overflow: hidden;
+  color: var(--nx-ink);
+  font-size: var(--nx-fs-sm);
+  font-weight: var(--nx-fw-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nx-market-asset:hover .nx-asset-copy b {
+  color: var(--nx-accent-ink);
+}
+
+.nx-asset-copy small {
+  color: var(--nx-dim);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-3xs);
+}
+
+.nx-market-price {
+  overflow: hidden;
+  color: var(--nx-ink);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nx-market-change {
+  justify-self: end;
+}
+
+.nx-row-spark {
+  height: 30px;
+}
+
+.nx-market-cap {
+  overflow: hidden;
+  color: var(--nx-muted);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nx-row-action {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  justify-self: end;
+  place-items: center;
+  border: 1px solid var(--nx-line);
+  border-radius: var(--nx-r-sm);
+  background: var(--nx-surface-2);
+  color: var(--nx-muted);
+}
+
+.nx-row-action:hover {
+  border-color: var(--nx-accent-line);
+  background: var(--nx-accent-soft);
+  color: var(--nx-accent);
+}
+
+.nx-skeleton-row {
+  min-height: 62px;
+  border-bottom: 1px solid var(--nx-line-soft);
+}
+
+.nx-market-empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--nx-space-2);
+  padding: var(--nx-space-7) var(--nx-space-5);
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-sm);
+  text-align: center;
+}
+
+.nx-market-empty p {
+  max-width: 48ch;
+}
+
+.nx-market-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--nx-space-3);
+  margin-top: var(--nx-space-2);
+  color: var(--nx-dim);
+  font-size: var(--nx-fs-xs);
+}
+
+.nx-market-pagination {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--nx-space-4);
+  border-top: 1px solid var(--nx-line-soft);
+  color: var(--nx-dim);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-3xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nx-market-pagination > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nx-market-pagination b {
+  color: var(--nx-ink);
+  font-weight: var(--nx-fw-medium);
+}
+
+.nx-market-pagination i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--nx-accent);
+}
+
+.nx-market-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-2) var(--nx-space-4);
+  padding: 10px var(--nx-space-4);
+  border-top: 1px solid var(--nx-line-soft);
+  background: var(--nx-bg-raised);
+  color: var(--nx-dim);
+  font-size: var(--nx-fs-2xs);
+}
+
+.nx-market-footer > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nx-market-footer > .nx-market-footer-end {
+  gap: var(--nx-space-3);
+}
+
+.nx-market-footer .nx-text-action {
+  font-size: var(--nx-fs-2xs);
+}
+
+/* Selected asset ------------------------------------------------------------ */
+
+.nx-market-aside {
+  position: sticky;
+  top: var(--nx-scroll-offset);
+  display: grid;
+  gap: var(--nx-space-5);
+  padding: var(--nx-space-5);
+}
+
+.nx-aside-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nx-aside-identity > div {
+  min-width: 0;
+}
+
+.nx-aside-identity h3 {
+  overflow: hidden;
+  color: var(--nx-ink);
+  font-size: var(--nx-fs-lg);
+  font-weight: var(--nx-fw-bold);
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nx-aside-symbol {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  color: var(--nx-muted);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-xs);
+}
+
+.nx-aside-symbol span {
+  padding: 1px 7px;
+  border: 1px solid var(--nx-line);
+  border-radius: var(--nx-r-pill);
+  color: var(--nx-dim);
+  font-size: var(--nx-fs-3xs);
+}
+
+.nx-aside-quote {
+  display: grid;
+  gap: 4px;
+}
+
+.nx-aside-price {
+  color: var(--nx-ink);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-xl);
+  font-weight: var(--nx-fw-medium);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.nx-aside-stats {
+  display: grid;
+  gap: var(--nx-space-3);
+  margin: 0;
+  padding-top: var(--nx-space-4);
+  border-top: 1px solid var(--nx-line-soft);
+}
+
+.nx-aside-stats div {
+  display: grid;
+  gap: 2px;
+}
+
+.nx-aside-stats dt {
+  color: var(--nx-dim);
+  font-size: var(--nx-fs-2xs);
+}
+
+.nx-aside-stats dd {
+  margin: 0;
+  color: var(--nx-ink-2);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-sm);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.nx-aside-buy {
+  width: 100%;
+}
+
+.nx-aside-empty {
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-sm);
+}
+
+/* Responsive ---------------------------------------------------------------- */
+
+@media (max-width: 1180px) {
+  .nx-market-section {
+    --nx-market-cols: minmax(170px, 1.6fr) minmax(110px, 1fr) 80px 96px 36px;
+  }
+
+  .nx-market-layout {
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
+
+  .nx-market-head > :nth-child(5),
+  .nx-market-cap,
+  .nx-skeleton-row > :nth-child(5) {
+    display: none;
+  }
+}
+
+@media (max-width: 980px) {
+  .nx-market-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nx-market-aside {
+    position: static;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--nx-space-4) var(--nx-space-5);
+  }
+
+  .nx-market-aside > .nx-eyebrow,
+  .nx-aside-stats,
+  .nx-aside-buy {
+    grid-column: 1 / -1;
+  }
+
+  .nx-aside-quote {
+    justify-items: end;
+    text-align: right;
+  }
+
+  .nx-aside-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .nx-market-toolbar {
+    padding: var(--nx-space-3);
+  }
+
+  .nx-market-toolbar .nx-search {
+    width: 100%;
+  }
+
+  .nx-toolbar-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .nx-market-head {
+    display: none;
+  }
+
+  .nx-market-scroll {
+    max-height: min(560px, 70vh);
+  }
+
+  .nx-market-row {
+    grid-template-columns: minmax(0, 1fr) auto 32px;
+    grid-template-areas:
+      'asset price action'
+      'asset change action';
+    gap: 2px var(--nx-space-3);
+    padding: 10px var(--nx-space-3);
+    contain-intrinsic-size: auto 64px;
+  }
+
+  .nx-market-asset {
+    grid-area: asset;
+    gap: 10px;
+  }
+
+  .nx-rank {
+    width: 18px;
+  }
+
+  .nx-market-price {
+    grid-area: price;
+    font-size: var(--nx-fs-xs);
+  }
+
+  .nx-market-change {
+    grid-area: change;
+    font-size: var(--nx-fs-3xs);
+  }
+
+  .nx-row-action {
+    grid-area: action;
+  }
+
+  .nx-row-spark,
+  .nx-market-cap {
+    display: none;
+  }
+
+  .nx-skeleton-row {
+    grid-template-columns: minmax(0, 1fr) 80px;
+    padding-inline: var(--nx-space-3);
+  }
+
+  .nx-skeleton-row > :nth-child(n + 3) {
+    display: none;
+  }
+
+  .nx-market-pagination {
+    gap: var(--nx-space-3);
+  }
+
+  .nx-market-aside {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--nx-space-4);
+  }
+
+  .nx-aside-quote {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .nx-aside-price {
+    font-size: var(--nx-fs-lg);
+  }
+}
+
+@media (max-width: 380px) {
+  .nx-rank {
+    display: none;
+  }
+}

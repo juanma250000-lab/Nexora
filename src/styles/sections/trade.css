@@ -1,0 +1,183 @@
+/* ==========================================================================
+   Simulated trade
+   ========================================================================== */
+
+.nx-trade-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+  align-items: start;
+  gap: clamp(32px, 6vw, 88px);
+}
+
+.nx-trade-intro .nx-section-heading {
+  margin-bottom: var(--nx-space-6);
+}
+
+.nx-steps {
+  display: grid;
+  gap: var(--nx-space-3);
+  max-width: 520px;
+}
+
+.nx-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: var(--nx-space-4);
+  border: 1px solid var(--nx-line-soft);
+  border-radius: var(--nx-r-md);
+  background: var(--nx-surface-1);
+}
+
+.nx-step-index {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--nx-accent-line);
+  border-radius: 50%;
+  background: var(--nx-accent-soft);
+  color: var(--nx-accent);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-2xs);
+}
+
+.nx-steps b {
+  display: block;
+  color: var(--nx-ink);
+  font-size: var(--nx-fs-sm);
+}
+
+.nx-steps small {
+  display: block;
+  margin-top: 2px;
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-xs);
+  line-height: var(--nx-lh-normal);
+}
+
+.nx-demo-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: var(--nx-space-5);
+  padding: 8px 14px;
+  border: 1px solid rgba(242, 194, 125, 0.3);
+  border-radius: var(--nx-r-pill);
+  background: var(--nx-warning-soft);
+  color: var(--nx-warning);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-3xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nx-trade-card {
+  position: sticky;
+  top: var(--nx-scroll-offset);
+  padding: var(--nx-space-5);
+  border-color: var(--nx-line-strong);
+  border-radius: var(--nx-r-lg);
+  background: linear-gradient(180deg, var(--nx-surface-2), var(--nx-surface-1));
+  box-shadow: var(--nx-shadow-3), var(--nx-inset-hi);
+}
+
+.nx-trade-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--nx-space-4);
+}
+
+.nx-trade-card .nx-segmented {
+  margin-bottom: var(--nx-space-2);
+}
+
+.nx-trade-card .nx-field-label,
+.nx-trade-card .nx-field-row {
+  margin-top: var(--nx-space-4);
+}
+
+.nx-trade-card .nx-field-row .nx-field-label {
+  margin-top: 0;
+}
+
+.nx-estimate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-3);
+  margin-top: var(--nx-space-4);
+  padding: 14px var(--nx-space-4);
+  border: 1px solid rgba(125, 240, 203, 0.2);
+  border-radius: var(--nx-r-sm);
+  background: rgba(125, 240, 203, 0.06);
+}
+
+.nx-estimate > span {
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-xs);
+}
+
+.nx-estimate > b {
+  color: var(--nx-accent);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-sm);
+  font-weight: var(--nx-fw-medium);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.nx-trade-card > .nx-button {
+  margin-top: var(--nx-space-5);
+}
+
+.nx-form-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: var(--nx-space-3);
+  color: var(--nx-dim);
+  font-size: var(--nx-fs-2xs);
+  text-align: center;
+}
+
+.nx-form-foot svg {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .nx-trade-section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nx-trade-card {
+    position: static;
+  }
+
+  .nx-steps {
+    max-width: none;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .nx-steps li {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .nx-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nx-steps li {
+    flex-direction: row;
+    padding: var(--nx-space-3);
+  }
+
+  .nx-trade-card {
+    padding: var(--nx-space-4);
+  }
+}

@@ -1,10 +1,10 @@
-import { memo, useId, useMemo } from 'react';
-import { pricePath } from '../lib/format';
+import { memo, useId, useMemo, useState } from 'react';
+import { formatPercent, pricePath } from '../lib/format';
 
 // Literal colours: SVG presentation attributes are not reliably able to
 // resolve CSS custom properties across browsers.
 const UP_COLOR = '#5fe3ae';
-const DOWN_COLOR = '#ff8590';
+const DOWN_COLOR = '#ff8a94';
 export const ACCENT_COLOR = '#7df0cb';
 
 /**
@@ -46,7 +46,7 @@ export const Sparkline = memo(function Sparkline({ coin, large = false, tone, em
       {large && (
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.24" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -56,7 +56,7 @@ export const Sparkline = memo(function Sparkline({ coin, large = false, tone, em
         d={path}
         fill="none"
         stroke={color}
-        strokeWidth={large ? 2.5 : 2}
+        strokeWidth={large ? 2.25 : 1.75}
         strokeLinecap="round"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
@@ -69,38 +69,57 @@ export const Sparkline = memo(function Sparkline({ coin, large = false, tone, em
 export const Change = memo(function Change({ value, className = '' }) {
   const safe = Number.isFinite(value) ? value : 0;
   const rising = safe >= 0;
-  const text = `${Math.abs(safe).toFixed(2)}%`;
+  const text = formatPercent(safe);
 
   return (
     <span className={`nx-change ${rising ? 'is-up' : 'is-down'} ${className}`.trim()}>
-      <span aria-hidden="true">{`${rising ? '+' : '-'}${text}`}</span>
+      <span aria-hidden="true">{`${rising ? '+' : '−'}${text}`}</span>
       <span className="nx-sr-only">{`${text}, ${rising ? 'de aumento' : 'de descenso'}`}</span>
     </span>
   );
 });
 
-/** Coin logo with a letter fallback when the CDN image is unavailable. */
+/**
+ * Coin logo with a letter fallback, used both when the provider ships no
+ * image and when the CDN image fails to load (instead of a broken icon).
+ */
 export const CoinIcon = memo(function CoinIcon({ coin, size = 'normal' }) {
+  const [failedSrc, setFailedSrc] = useState(null);
   const large = size === 'large';
-  if (coin.image) {
+  const dimension = large ? 48 : 32;
+  const className = `nx-coin-icon ${large ? 'is-large' : ''}`.trim();
+
+  if (coin.image && failedSrc !== coin.image) {
     return (
       <img
-        className={`nx-coin-icon ${large ? 'is-large' : ''}`.trim()}
+        className={className}
         src={coin.image}
         alt=""
-        width={large ? 49 : 30}
-        height={large ? 49 : 30}
+        width={dimension}
+        height={dimension}
         loading="lazy"
         decoding="async"
+        onError={() => setFailedSrc(coin.image)}
       />
     );
   }
+
   return (
-    <span
-      className={`nx-coin-icon nx-coin-fallback ${large ? 'is-large' : ''}`.trim()}
-      aria-hidden="true"
-    >
-      {coin.symbol.slice(0, 1)}
+    <span className={`${className} nx-coin-fallback`} aria-hidden="true">
+      {String(coin.symbol || coin.name || '?').slice(0, 1)}
     </span>
   );
 });
+
+/**
+ * "En vivo" / "Último dato" / "Sin datos" badge: never claims live data while
+ * the market is unreachable, nor a "last value" that never arrived.
+ */
+export function LiveBadge({ isLive, hasData = true }) {
+  const label = isLive ? 'En vivo' : hasData ? 'Último dato' : 'Sin datos';
+  return (
+    <span className={`nx-live-badge ${isLive ? 'is-live' : 'is-stale'}`}>
+      <i aria-hidden="true" /> {label}
+    </span>
+  );
+}

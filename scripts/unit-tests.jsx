@@ -25,7 +25,17 @@ import { MARKET_ERROR_MESSAGES, nextRetryDelay, parseRetryAfter } from '../src/l
 import { canonicalCoinId, COIN_ID_ALIASES } from '../src/lib/coinAliases.js';
 import { PAGE_SIZE, REFRESH_MS, resolveNavFromSection } from '../src/lib/constants.js';
 import { mergeCoins } from '../src/lib/collections.js';
-import { formatClock, formatCOP, formatCrypto, pricePath, toLowerCaseLocale } from '../src/lib/format.js';
+import {
+  formatClock,
+  formatCOP,
+  formatCrypto,
+  formatPercent,
+  formatTimestamp,
+  pricePath,
+  toLowerCaseLocale,
+} from '../src/lib/format.js';
+import { readDemoPortfolio } from '../src/lib/storage.js';
+import { INITIAL_BALANCES, INITIAL_CASH, PORTFOLIO_KEY } from '../src/lib/constants.js';
 
 /* ------------------------------------------------------------------ *
  * Tiny assertion helpers
@@ -730,6 +740,57 @@ test('los formateadores no producen NaN ni undefined', () => {
   // conservan porque ambas partes de la comparación pasan por la misma rutina.
   assertEqual(toLowerCaseLocale('  ÁvAl  '.trim()), 'ával', 'normalización de búsqueda');
   assertEqual(formatClock(null), 'Esperando cotizaciones', 'reloj sin fecha');
+});
+
+test('formatPercent usa coma decimal y nunca muestra NaN', () => {
+  assertEqual(formatPercent(1.4), '1,40 %', 'dos decimales');
+  assertEqual(formatPercent(-3.256), '3,26 %', 'valor absoluto: el signo lo pone la UI');
+  assertEqual(formatPercent(54.27, 1), '54,3 %', 'un decimal');
+  assertEqual(formatPercent(Number.NaN), '0,00 %', 'NaN');
+});
+
+test('formatCOP reutiliza formateadores sin perder decimales en montos pequeños', () => {
+  assert(formatCOP(0.5).includes('0,50'), 'menos de un peso conserva decimales');
+  assert(!formatCOP(1234.56).includes(','), 'montos grandes sin decimales');
+  assert(!formatCOP(0).includes(','), 'cero sin decimales');
+});
+
+test('formatTimestamp no imprime "Invalid Date"', () => {
+  assertEqual(formatTimestamp('no-es-una-fecha'), 'Fecha no disponible', 'fecha corrupta');
+  assert(/2026/.test(formatTimestamp('2026-01-15T10:00:00.000Z')), 'fecha válida');
+});
+
+test('readDemoPortfolio descarta registros corruptos del almacenamiento local', () => {
+  localStorage.setItem(
+    PORTFOLIO_KEY,
+    JSON.stringify({
+      cash: 'mucho',
+      balances: { bitcoin: -2, ethereum: 3, solana: 'diez' },
+      activity: [
+        null,
+        { id: 'NX-1', type: 'buy', quantity: 1, total: 100 },
+        { id: 'NX-2', type: 'robo', quantity: 1, total: 100 },
+        { id: 3, type: 'sell', quantity: 1, total: 100 },
+        { id: 'NX-4', type: 'sell', quantity: Number.NaN, total: 100 },
+      ],
+    })
+  );
+  const portfolio = readDemoPortfolio();
+  assertEqual(portfolio.cash, INITIAL_CASH, 'saldo inválido vuelve al inicial');
+  assertEqual(portfolio.balances.bitcoin, INITIAL_BALANCES.bitcoin, 'saldo negativo ignorado');
+  assertEqual(portfolio.balances.ethereum, 3, 'saldo válido conservado');
+  assertEqual(portfolio.balances.solana, INITIAL_BALANCES.solana, 'saldo no numérico ignorado');
+  assertEqual(portfolio.activity.length, 1, 'solo sobrevive el registro válido');
+  assertEqual(portfolio.activity[0].id, 'NX-1', 'registro válido');
+  localStorage.removeItem(PORTFOLIO_KEY);
+});
+
+test('readDemoPortfolio sobrevive a JSON ilegible', () => {
+  localStorage.setItem(PORTFOLIO_KEY, '{roto');
+  const portfolio = readDemoPortfolio();
+  assertEqual(portfolio.cash, INITIAL_CASH, 'saldo inicial');
+  assertEqual(portfolio.activity.length, 0, 'sin historial');
+  localStorage.removeItem(PORTFOLIO_KEY);
 });
 
 /* ------------------------------------------------------------------ *

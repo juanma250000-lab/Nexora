@@ -1,0 +1,529 @@
+/* ==========================================================================
+   NEXORA — Layout
+   App shell, header, section rhythm, mobile tab bar and footer.
+   ========================================================================== */
+
+.nx-app {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  padding-bottom: var(--nx-mobile-nav-space);
+  /* Contain decorative bleed (hero halo, horizontal scrollers) so mobile
+     browsers never widen the layout viewport. `clip`, unlike `hidden`,
+     creates no scroll container and keeps the sticky header working. */
+  overflow-x: clip;
+}
+
+/* One soft light source behind the hero. Gradients only: no blend modes or
+   filters, so it costs nothing after the first paint. */
+.nx-ambient {
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: 880px;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 78% 18%, rgba(46, 140, 150, 0.16), transparent 70%),
+    radial-gradient(45% 45% at 8% 8%, rgba(70, 104, 160, 0.12), transparent 70%),
+    linear-gradient(180deg, #080b12 0%, rgba(7, 9, 14, 0) 100%);
+}
+
+.nx-section,
+.nx-hero,
+.nx-header-inner,
+.nx-footer-inner,
+.nx-ticker-inner {
+  width: min(var(--nx-container), calc(100% - (var(--nx-gutter) * 2)));
+  margin-inline: auto;
+}
+
+main:focus {
+  outline: none;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.nx-header {
+  position: sticky;
+  z-index: var(--nx-z-header);
+  top: 0;
+  border-bottom: 1px solid var(--nx-line-soft);
+  background: var(--nx-chrome);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+}
+
+.nx-header-inner {
+  display: flex;
+  height: var(--nx-header-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-5);
+}
+
+.nx-brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 11px;
+  padding: 4px;
+  margin-left: -4px;
+  border-radius: var(--nx-r-sm);
+  color: var(--nx-ink);
+}
+
+.nx-brand-word {
+  font-size: var(--nx-fs-sm);
+  font-weight: var(--nx-fw-extrabold);
+  letter-spacing: 0.18em;
+}
+
+.nx-brand-mark {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+  border: 1px solid var(--nx-accent-line);
+  border-radius: 9px;
+  background: linear-gradient(145deg, rgba(125, 240, 203, 0.22), rgba(125, 240, 203, 0.03));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: rotate(-8deg);
+  transition: transform var(--nx-dur) var(--nx-ease);
+}
+
+.nx-brand:hover .nx-brand-mark {
+  transform: rotate(0deg);
+}
+
+.nx-brand-mark i {
+  display: block;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--nx-accent);
+  transform: skew(-20deg);
+}
+
+.nx-brand-mark i:nth-child(1) {
+  height: 9px;
+  opacity: 0.7;
+}
+
+.nx-brand-mark i:nth-child(2) {
+  height: 16px;
+}
+
+.nx-brand-mark i:nth-child(3) {
+  height: 12px;
+  opacity: 0.85;
+}
+
+.nx-desktop-nav ul {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nx-nav-link {
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: var(--nx-r-pill);
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-sm);
+  font-weight: var(--nx-fw-semibold);
+  transition: color var(--nx-dur-fast) var(--nx-ease), background-color var(--nx-dur-fast) var(--nx-ease);
+}
+
+.nx-nav-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--nx-ink);
+}
+
+.nx-nav-link.is-active {
+  background: var(--nx-accent-soft);
+  color: var(--nx-accent-ink);
+}
+
+/* Account control -------------------------------------------------------- */
+
+.nx-account {
+  position: relative;
+}
+
+.nx-account-button {
+  display: inline-flex;
+  height: 38px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--nx-line-strong);
+  border-radius: var(--nx-r-pill);
+  background: var(--nx-surface-2);
+  color: var(--nx-ink);
+  font-size: var(--nx-fs-xs);
+  font-weight: var(--nx-fw-bold);
+  white-space: nowrap;
+}
+
+.nx-account-button:hover {
+  border-color: var(--nx-accent-line);
+  background: var(--nx-surface-3);
+}
+
+.nx-account-button.is-connected {
+  border-color: var(--nx-accent-line);
+  background: var(--nx-accent-soft);
+  color: var(--nx-accent-ink);
+}
+
+.nx-account-chevron {
+  transition: transform var(--nx-dur) var(--nx-ease);
+}
+
+.nx-account-button[aria-expanded='true'] .nx-account-chevron {
+  transform: rotate(180deg);
+}
+
+.nx-account-menu {
+  position: absolute;
+  z-index: var(--nx-z-menu);
+  top: calc(100% + 10px);
+  right: 0;
+  width: 270px;
+  padding: var(--nx-space-2);
+  border: 1px solid var(--nx-line);
+  border-radius: var(--nx-r-md);
+  background: var(--nx-surface-2);
+  box-shadow: var(--nx-shadow-3), var(--nx-inset-hi);
+  animation: nx-rise 180ms var(--nx-ease-out) both;
+}
+
+.nx-account-menu p {
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid var(--nx-line-soft);
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-xs);
+  line-height: var(--nx-lh-normal);
+}
+
+.nx-account-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  margin-top: var(--nx-space-1);
+  padding: 10px 12px;
+  border-radius: var(--nx-r-sm);
+  color: var(--nx-ink-2);
+  font-size: var(--nx-fs-sm);
+  font-weight: var(--nx-fw-semibold);
+  text-align: left;
+}
+
+.nx-account-menu button:hover {
+  background: var(--nx-surface-hover);
+  color: var(--nx-ink);
+}
+
+/* --------------------------------------------------------------------------
+   Sections
+   -------------------------------------------------------------------------- */
+
+.nx-section {
+  padding-block: var(--nx-section-y);
+  /* html already reserves the header height (scroll-padding-top); this
+     pulls the section's own top padding back so the title lands close
+     under the header instead of a screen of empty space below it. */
+  scroll-margin-top: calc(var(--nx-space-5) - var(--nx-section-y));
+}
+
+.nx-section + .nx-section {
+  border-top: 1px solid var(--nx-line-soft);
+}
+
+.nx-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--nx-space-5) var(--nx-space-7);
+  margin-bottom: clamp(28px, 3.5vw, 44px);
+}
+
+.nx-section-heading-copy {
+  min-width: 0;
+  max-width: 640px;
+  flex: 1 1 26rem;
+}
+
+.nx-section-heading h2 {
+  margin: 14px 0 12px;
+  color: var(--nx-ink);
+  font-size: var(--nx-fs-h2);
+  font-weight: var(--nx-fw-bold);
+  letter-spacing: var(--nx-tracking-tight);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.nx-section-lead {
+  max-width: 54ch;
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-base);
+  line-height: var(--nx-lh-relaxed);
+}
+
+.nx-section-heading-aside {
+  flex: 0 0 auto;
+}
+
+.nx-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--nx-accent);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-3xs);
+  font-weight: var(--nx-fw-medium);
+  letter-spacing: var(--nx-tracking-wide);
+  text-transform: uppercase;
+}
+
+.nx-section-heading-copy > .nx-eyebrow::before {
+  width: 18px;
+  height: 1px;
+  background: currentColor;
+  content: '';
+  opacity: 0.7;
+}
+
+.nx-eyebrow.is-muted {
+  margin: 0;
+  color: var(--nx-dim);
+  font-size: var(--nx-fs-3xs);
+  font-weight: var(--nx-fw-medium);
+}
+
+/* --------------------------------------------------------------------------
+   Mobile tab bar
+   -------------------------------------------------------------------------- */
+
+.nx-mobile-nav {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.nx-footer {
+  border-top: 1px solid var(--nx-line-soft);
+  background: var(--nx-bg-raised);
+}
+
+.nx-footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: var(--nx-space-6) var(--nx-space-6);
+  padding-block: var(--nx-space-8) var(--nx-space-6);
+}
+
+.nx-footer-brand p {
+  max-width: 30ch;
+  margin-top: var(--nx-space-4);
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-sm);
+  line-height: var(--nx-lh-relaxed);
+}
+
+.nx-footer-col h2 {
+  margin-bottom: var(--nx-space-4);
+  color: var(--nx-dim);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-3xs);
+  font-weight: var(--nx-fw-medium);
+  letter-spacing: var(--nx-tracking-wide);
+  text-transform: uppercase;
+}
+
+.nx-footer-col ul {
+  display: grid;
+  gap: 4px;
+}
+
+.nx-footer-col a {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  color: var(--nx-ink-2);
+  font-size: var(--nx-fs-sm);
+  transition: color var(--nx-dur-fast) var(--nx-ease);
+}
+
+.nx-footer-col a:hover {
+  color: var(--nx-accent);
+}
+
+.nx-footer-col a svg {
+  color: var(--nx-dim);
+}
+
+.nx-footer-bottom {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--nx-space-4);
+  padding-top: var(--nx-space-5);
+  border-top: 1px solid var(--nx-line-soft);
+}
+
+.nx-footer-legal {
+  max-width: 90ch;
+  color: var(--nx-dim);
+  font-size: var(--nx-fs-xs);
+  line-height: var(--nx-lh-relaxed);
+  scroll-margin-top: var(--nx-space-5);
+}
+
+.nx-footer-legal strong {
+  color: var(--nx-muted);
+}
+
+.nx-copyright {
+  color: var(--nx-dim);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-3xs);
+  letter-spacing: var(--nx-tracking-mono);
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .nx-nav-link {
+    padding: 0 11px;
+  }
+}
+
+/* Below ~900px the links no longer fit next to the logo: a bottom tab bar
+   takes over, which also keeps navigation within thumb reach. */
+@media (max-width: 900px) {
+  :root {
+    --nx-mobile-nav-space: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .nx-desktop-nav {
+    display: none;
+  }
+
+  .nx-mobile-nav {
+    position: fixed;
+    z-index: var(--nx-z-mobile-nav);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    padding: 6px 8px max(6px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--nx-line);
+    background: var(--nx-chrome);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+  }
+
+  .nx-mobile-nav ul {
+    display: grid;
+    max-width: 560px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    margin: 0 auto;
+  }
+
+  .nx-mobile-nav a {
+    display: grid;
+    min-height: 56px;
+    align-content: center;
+    justify-items: center;
+    gap: 4px;
+    border-radius: var(--nx-r-sm);
+    color: var(--nx-dim);
+    font-size: var(--nx-fs-3xs);
+    font-weight: var(--nx-fw-semibold);
+    transition: color var(--nx-dur-fast) var(--nx-ease), background-color var(--nx-dur-fast) var(--nx-ease);
+  }
+
+  .nx-mobile-nav a span {
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nx-mobile-nav a.is-active {
+    background: var(--nx-accent-soft);
+    color: var(--nx-accent-ink);
+  }
+
+  .nx-footer-inner {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .nx-footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --nx-header-height: 58px;
+  }
+
+  .nx-brand-word {
+    font-size: var(--nx-fs-xs);
+  }
+
+  .nx-account-button {
+    height: 36px;
+    padding: 0 13px;
+  }
+
+  /* Wrap instead of switching to a column: in a column the copy's
+     flex-basis would turn into a minimum height. */
+  .nx-section-heading {
+    align-items: flex-start;
+  }
+
+  .nx-section-heading-copy,
+  .nx-section-heading-aside {
+    flex: 1 1 100%;
+  }
+
+  .nx-section-lead {
+    font-size: var(--nx-fs-sm);
+  }
+
+  .nx-footer-inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-top: var(--nx-space-7);
+  }
+
+  .nx-footer-sources {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 380px) {
+  .nx-account-button span {
+    max-width: 112px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

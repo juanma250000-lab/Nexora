@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ALLOCATION_COLORS, NAV_ITEMS, OBSERVED_SECTIONS, resolveNavFromSection } from './lib/constants';
 import { formatClock, formatCrypto, scrollBehavior, toLowerCaseLocale } from './lib/format';
 import { useCountdown } from './hooks/useCountdown';
@@ -17,6 +17,7 @@ import { Hero } from './components/Hero';
 import { MarketSection } from './components/MarketSection';
 import { MobileNav } from './components/MobileNav';
 import { PortfolioSection } from './components/PortfolioSection';
+import { ResetPortfolioModal } from './components/ResetPortfolioModal';
 import { TickerStrip } from './components/TickerStrip';
 import { Toast } from './components/Toast';
 import { TradeReviewModal } from './components/TradeReviewModal';
@@ -46,7 +47,7 @@ export default function Nexora() {
     refresh,
     pageSize,
   } = useMarket(usdCopRate, notify);
-  const { balances, cash, activity, executeTrade } = useDemoPortfolio();
+  const { balances, cash, activity, executeTrade, resetPortfolio } = useDemoPortfolio();
   // Seconds left until the next automatic market retry (0 when not retrying).
   const retryInSeconds = useCountdown(nextRetryAt);
 
@@ -59,6 +60,7 @@ export default function Nexora() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('signup');
   const [isDemoConnected, setIsDemoConnected] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
 
   /* ---------------------------------------------------------------- *
    * Derived state
@@ -196,10 +198,39 @@ export default function Nexora() {
     const resolved = resolveNavFromSection(target, type);
     if (resolved) setActiveSection(resolved);
 
-    document
-      .getElementById(target)
-      ?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+    const element = document.getElementById(target);
+    if (!element) return;
+    element.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+
+    // Keep the address bar shareable (#mercado, #vender…) without adding a
+    // history entry per click, so "back" still leaves the page.
+    if (window.location.hash !== `#${navId}`) {
+      window.history.replaceState(null, '', `#${navId}`);
+    }
   }, []);
+
+  // Deep links: honour /#mercado, /#vender… on load and on manual hash edits.
+  useEffect(() => {
+    const followHash = () => {
+      let id = '';
+      try {
+        id = decodeURIComponent(window.location.hash.slice(1));
+      } catch {
+        return; // malformed escape sequence in a hand-typed URL
+      }
+      if (!id) return;
+      const known = NAV_ITEMS.some((item) => item.id === id) || document.getElementById(id);
+      if (known) goTo(id);
+    };
+
+    // Wait one frame so the sections exist and have their final layout.
+    const frame = window.requestAnimationFrame(followHash);
+    window.addEventListener('hashchange', followHash);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('hashchange', followHash);
+    };
+  }, [goTo]);
 
   const selectAsset = useCallback(
     (coinId) => {
@@ -265,6 +296,20 @@ export default function Nexora() {
     [notify]
   );
 
+  const signOut = useCallback(() => {
+    setIsDemoConnected(false);
+    notify('success', 'Sesión de demostración cerrada.');
+  }, [notify]);
+
+  const openReset = useCallback(() => setResetOpen(true), []);
+  const closeReset = useCallback(() => setResetOpen(false), []);
+  const confirmReset = useCallback(() => {
+    resetPortfolio();
+    setAmount('');
+    setResetOpen(false);
+    notify('success', 'Portafolio de prueba restablecido a su estado inicial.');
+  }, [notify, resetPortfolio]);
+
   const openAuth = useCallback((mode) => {
     setAuthMode(mode);
     setAuthOpen(true);
@@ -283,6 +328,9 @@ export default function Nexora() {
 
   return (
     <div className="nx-app">
+      <a className="nx-skip-link" href="#contenido">
+        Saltar al contenido
+      </a>
       <div className="nx-ambient" aria-hidden="true" />
 
       <Header
@@ -290,9 +338,10 @@ export default function Nexora() {
         onNavigate={goTo}
         isDemoConnected={isDemoConnected}
         onOpenAuth={openSignIn}
+        onSignOut={signOut}
       />
 
-      <main>
+      <main id="contenido" tabIndex={-1}>
         <Hero
           liveLabel={marketStatusLabel}
           updatedAtLabel={updatedAtLabel}
@@ -309,7 +358,7 @@ export default function Nexora() {
           usdCopRate={usdCopRate}
         />
 
-        <TickerStrip coins={topCoins} onSelectAsset={selectAsset} />
+        <TickerStrip coins={topCoins} dataSource={dataSource} onSelectAsset={selectAsset} />
 
         <MarketSection
           coins={coins}
@@ -335,7 +384,11 @@ export default function Nexora() {
           onRefresh={refresh}
         />
 
-        <DetailSection coin={selectedCoin} usdCopRate={usdCopRate} />
+        <DetailSection
+          coin={selectedCoin}
+          usdCopRate={usdCopRate}
+          isLive={marketState === 'en-vivo'}
+        />
 
         <TradeSection
           coin={selectedCoin}
@@ -349,6 +402,7 @@ export default function Nexora() {
           tradeValueCOP={trading.tradeValueCOP}
           feeCOP={trading.feeCOP}
           availableBalance={trading.availableBalance}
+          cash={cash}
           totalWithFee={trading.totalWithFee}
           error={trading.error}
           hasAmount={trading.currentAmount > 0}
@@ -363,6 +417,7 @@ export default function Nexora() {
           cash={cash}
           onSelectAsset={selectAsset}
           onNavigate={goTo}
+          onRequestReset={openReset}
         />
 
         <ActivitySection activity={activity} onNavigate={goTo} onNotice={showDemoNotice} />
@@ -386,6 +441,8 @@ export default function Nexora() {
           onConfirm={confirmTrade}
         />
       )}
+
+      {resetOpen && <ResetPortfolioModal onClose={closeReset} onConfirm={confirmReset} />}
 
       {authOpen && (
         <AuthModal
