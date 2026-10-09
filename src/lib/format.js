@@ -23,6 +23,25 @@ export function formatCrypto(value, maximumFractionDigits = 6) {
   }).format(safe);
 }
 
+/**
+ * Percentage written the Colombian way, like the rest of the figures:
+ * decimal comma and a non-breaking space before the sign ("2,25 %"), the
+ * same form the fee line already used ("0,1 %"). `value` is already in
+ * percent units. Built by hand because engines disagree on the es-CO
+ * percent pattern.
+ */
+export function formatPercent(value, fractionDigits = 2) {
+  const safe = Number.isFinite(value) ? value : 0;
+  const factor = 10 ** fractionDigits;
+  // "-0,00 %" would announce a loss that is not there.
+  const rounded = Math.round(safe * factor) / factor || 0;
+  const number = new Intl.NumberFormat('es-CO', {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(rounded);
+  return `${number} %`;
+}
+
 export function formatClock(date) {
   if (!date) return 'Esperando cotizaciones';
   return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });

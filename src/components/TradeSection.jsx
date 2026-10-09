@@ -2,6 +2,13 @@ import { memo } from 'react';
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, ChevronDown, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { formatCOP, formatCrypto } from '../lib/format';
 
+/** How the simulator works, in the same terms the guided tour uses. */
+const TRADE_STEPS = [
+  { title: 'Elige la operación', text: 'Comprar o vender, y el activo digital.' },
+  { title: 'Escribe el monto', text: 'En pesos para comprar; en unidades del activo para vender.' },
+  { title: 'Revisa y confirma', text: 'Verás la comisión y el total antes de confirmar.' },
+];
+
 function TradeSectionImpl({
   coin,
   options,
@@ -31,12 +38,28 @@ function TradeSectionImpl({
       aria-labelledby="nx-trade-title"
     >
       <div className="nx-trade-intro">
-        <span className="nx-section-index">03 / SIMULAR</span>
-        <h2 id="nx-trade-title">Prueba una estrategia.</h2>
-        <p>
+        <span className="nx-section-index">
+          <span className="nx-section-number">03</span> Simular
+        </span>
+        <h2 id="nx-trade-title">
+          Prueba <span>una estrategia.</span>
+        </h2>
+        <p className="nx-section-lead">
           Calcula una compra o venta con precios reales. Los movimientos solo modifican este
           portafolio de prueba.
         </p>
+        {/* role="list" keeps list semantics in Safari once the bullets are styled away. */}
+        <ol className="nx-trade-steps" role="list">
+          {TRADE_STEPS.map(({ title, text }, index) => (
+            <li key={title}>
+              <span className="nx-trade-step-number" aria-hidden="true">
+                {index + 1}
+              </span>
+              <b>{title}</b>
+              <span className="nx-trade-step-text">{text}</span>
+            </li>
+          ))}
+        </ol>
         <p className="nx-demo-stamp">
           <ShieldCheck size={16} aria-hidden="true" /> OPERACIÓN SIMULADA · SIN DINERO REAL
         </p>
@@ -48,7 +71,11 @@ function TradeSectionImpl({
           <span className="nx-cop-badge">COP</span>
         </div>
 
-        <div className="nx-trade-switch" role="group" aria-label="Tipo de operación">
+        <div
+          className={`nx-trade-switch ${isBuy ? '' : 'is-sell'}`.trim()}
+          role="group"
+          aria-label="Tipo de operación"
+        >
           <button
             type="button"
             className={isBuy ? 'is-active' : ''}

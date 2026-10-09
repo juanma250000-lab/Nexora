@@ -19,9 +19,15 @@ function DetailSectionImpl({ coin, usdCopRate }) {
     <section className="nx-section nx-detail-section" id="detalle" aria-labelledby="nx-detail-title">
       <div className="nx-detail-heading">
         <div>
-          <span className="nx-section-index">02 / ANALIZAR</span>
-          <h2 id="nx-detail-title">Conoce cada movimiento.</h2>
-          <p>Historial real de precios disponible para los últimos siete días.</p>
+          <span className="nx-section-index">
+            <span className="nx-section-number">02</span> Analizar
+          </span>
+          <h2 id="nx-detail-title">
+            Conoce <span>cada movimiento.</span>
+          </h2>
+          <p className="nx-section-lead">
+            Historial real de precios disponible para los últimos siete días.
+          </p>
         </div>
 
         {coin && (

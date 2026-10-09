@@ -19,12 +19,16 @@ function ActivitySectionImpl({ activity, onNavigate }) {
     >
       <div className="nx-section-heading">
         <div>
-          <span className="nx-section-index">05 / REGISTRO</span>
+          <span className="nx-section-index">
+            <span className="nx-section-number">05</span> Registro
+          </span>
           <h2 id="nx-activity-title">
             Cada movimiento,
-            <br className="nx-mobile-break" /> en perspectiva.
+            <br className="nx-mobile-break" /> <span>en perspectiva.</span>
           </h2>
-          <p>Historial local de las operaciones simuladas en este dispositivo.</p>
+          <p className="nx-section-lead">
+            Historial local de las operaciones simuladas en este dispositivo.
+          </p>
         </div>
 
         {/* A label, not a button: it used to look clickable but only raised a toast. */}
@@ -50,7 +54,7 @@ function ActivitySectionImpl({ activity, onNavigate }) {
                     {item.type === 'buy' ? 'Compra simulada' : 'Venta simulada'} de {item.name}
                   </b>
                   <small>
-                    {formatTimestamp(item.date)} · {item.id}
+                    {formatTimestamp(item.date)} · <span className="nx-activity-id">{item.id}</span>
                   </small>
                 </span>
 

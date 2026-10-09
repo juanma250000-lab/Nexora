@@ -110,8 +110,15 @@ async function mockNetwork(context, scenario = 'ok') {
 const results = [];
 let browser;
 
-async function openPage({ width = 1366, height = 800, scenario = 'ok', storage = null, hash = '' } = {}) {
-  const context = await browser.newContext({ viewport: { width, height }, locale: 'es-CO' });
+async function openPage({
+  width = 1366,
+  height = 800,
+  scenario = 'ok',
+  storage = null,
+  hash = '',
+  reducedMotion = 'no-preference',
+} = {}) {
+  const context = await browser.newContext({ viewport: { width, height }, locale: 'es-CO', reducedMotion });
   await mockNetwork(context, scenario);
   // Skip the first-visit invitation unless a test opts into a clean storage.
   const seeded = storage === null ? { 'nexora-guia-v1': JSON.stringify({ estado: 'omitido' }) } : storage;
@@ -156,6 +163,41 @@ const inViewport = (page, selector) =>
     const r = document.querySelector(s)?.getBoundingClientRect();
     return Boolean(r) && r.top < window.innerHeight && r.bottom > 0;
   }, selector);
+
+/**
+ * Element-level layout check. The page-level scroll test cannot see these
+ * problems because .nx-app clips horizontal overflow: it reports controls
+ * that stick out of the viewport and sibling blocks printed on top of each
+ * other inside the same panel.
+ */
+const layoutProblems = (page) =>
+  page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const problems = [];
+    const name = (el) => `${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} "${el.textContent.trim().slice(0, 30)}"`;
+    // Decorations and horizontal scrollers are allowed to extend past the edge.
+    const exempt = '.nx-ambient, .nx-market-orbit, .nx-ticker-strip, .nx-market-rows, .nx-sr-only';
+    for (const el of document.querySelectorAll('.nx-app *')) {
+      if (!el.getClientRects().length) continue;
+      if (el.closest(exempt) && !el.closest('.nx-hero-market-glass, .nx-floating-note')) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width && (r.right > vw + 0.5 || r.left < -0.5)) problems.push(`fuera de pantalla: ${name(el)}`);
+    }
+    const groups = '.nx-header, .nx-header-actions, .nx-market-aside, .nx-aside-stats, .nx-detail-current, .nx-data-rail, .nx-market-row, .nx-activity-row, .nx-holding-row, .nx-legend-row, .nx-cash-row, .nx-trade-lines > div, .nx-estimate, .nx-market-toolbar, .nx-hero-actions, .nx-footer';
+    for (const parent of document.querySelectorAll(groups)) {
+      const kids = [...parent.children].filter((k) => k.getClientRects().length && getComputedStyle(k).position !== 'absolute');
+      for (let i = 0; i < kids.length; i += 1) {
+        for (let j = i + 1; j < kids.length; j += 1) {
+          const a = kids[i].getBoundingClientRect();
+          const b = kids[j].getBoundingClientRect();
+          const x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (x > 1 && y > 1) problems.push(`superpuestos: ${name(kids[i])} × ${name(kids[j])}`);
+        }
+      }
+    }
+    return problems;
+  });
 
 /* ------------------------------------------------------------------ *
  * Scenarios
@@ -472,6 +514,88 @@ async function run() {
         .map((el) => el.outerHTML.slice(0, 80))
     );
     assert(unnamed.length === 0, unnamed.join(' | '));
+    await context.close();
+  });
+
+  await test('enlaces y menú: cada destino interno existe y se abre', async () => {
+    // Instant scrolling keeps the checks deterministic; behaviour is identical.
+    const { page, context, errors } = await openPage({ reducedMotion: 'reduce' });
+    await page.waitForSelector('.nx-market-row');
+    const links = await page.evaluate(() =>
+      [...document.querySelectorAll('a[href]')].map((a) => a.getAttribute('href'))
+    );
+    // Logo (cabecera y pie), Mercado, Portafolio y Privacidad.
+    assert(links.length === 5, `se esperaban 5 enlaces y hay ${links.length}: ${links.join(', ')}`);
+    for (const href of links) {
+      assert(/^#[a-z]+$/.test(href), `enlace sin destino interno válido: ${href}`);
+      assert(await page.evaluate((id) => Boolean(document.getElementById(id)), href.slice(1)), `no existe ${href}`);
+    }
+    for (let i = 0; i < links.length; i += 1) {
+      await page.locator('a[href]').nth(i).click();
+      await page.waitForTimeout(250);
+      assert(await inViewport(page, links[i]), `el enlace ${links[i]} no mostró su destino`);
+    }
+    const nav = page.getByRole('navigation', { name: 'Navegación principal' });
+    const entries = [
+      ['Inicio', '#inicio'],
+      ['Mercado', '#mercado'],
+      ['Comprar', '#comprar'],
+      ['Vender', '#comprar'],
+      ['Portafolio', '#portafolio'],
+      ['Actividad', '#actividad'],
+    ];
+    for (const [label, target] of entries) {
+      await nav.getByRole('button', { name: label, exact: true }).click();
+      await page.waitForTimeout(250);
+      assert(await inViewport(page, target), `«${label}» no mostró ${target}`);
+      const current = await nav.getByRole('button', { name: label, exact: true }).getAttribute('aria-current');
+      assert(current === 'location', `«${label}» no quedó marcado como sección actual`);
+    }
+    assert(errors.length === 0, errors.join(' | '));
+    await context.close();
+  });
+
+  await test('accesos rápidos: hero, franja y filas llevan al detalle o al simulador', async () => {
+    const { page, context, errors } = await openPage({ reducedMotion: 'reduce' });
+    await page.waitForSelector('.nx-market-row');
+    await page.locator('.nx-preview-coin', { hasText: 'ETH' }).click();
+    await page.waitForTimeout(250);
+    assert(await inViewport(page, '#detalle'), 'la cotización del hero no abrió el detalle');
+    assert((await page.locator('.nx-detail-current').textContent()).includes('Ethereum'), 'el detalle no muestra Ethereum');
+    await page.locator('.nx-ticker-item', { hasText: 'SOL' }).click();
+    await page.waitForTimeout(250);
+    assert((await page.locator('.nx-detail-current').textContent()).includes('Solana'), 'la franja no seleccionó Solana');
+    await page.getByRole('button', { name: 'Comprar Cardano' }).click();
+    await page.waitForTimeout(250);
+    assert(await inViewport(page, '#comprar'), 'la flecha de la fila no abrió el simulador');
+    assert((await page.locator('#nx-asset-select').inputValue()) === 'cardano', 'el simulador no recibió Cardano');
+    // The order side is visible at a glance: the switch carries its state.
+    await page.locator('.nx-trade-switch').getByRole('button', { name: 'Vender' }).click();
+    assert(await page.locator('.nx-trade-switch.is-sell').count() === 1, 'el selector no refleja la venta');
+    await page.locator('.nx-trade-switch').getByRole('button', { name: 'Comprar' }).click();
+    assert(await page.locator('.nx-trade-switch.is-sell').count() === 0, 'el selector no volvió a compra');
+    assert(errors.length === 0, errors.join(' | '));
+    await context.close();
+  });
+
+  await test('diseño: nada se sale de la pantalla ni se superpone (320–1440 px)', async () => {
+    for (const width of [320, 390, 768, 1024, 1440]) {
+      const { page, context } = await openPage({ width, reducedMotion: 'reduce' });
+      await page.waitForSelector('.nx-market-row');
+      await page.waitForTimeout(300);
+      const problems = await layoutProblems(page);
+      assert(problems.length === 0, `${width}px: ${problems.slice(0, 4).join(' | ')}`);
+      await context.close();
+    }
+  });
+
+  await test('movimiento reducido: sin animaciones de aparición al desplazarse', async () => {
+    const { page, context } = await openPage({ reducedMotion: 'reduce' });
+    await page.waitForSelector('.nx-market-row');
+    const animation = await page
+      .locator('.nx-market-table-wrap')
+      .evaluate((el) => getComputedStyle(el).animationName);
+    assert(animation === 'none', `con movimiento reducido la tabla aún anima (${animation})`);
     await context.close();
   });
 }

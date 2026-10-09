@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { ArrowRight, ChevronRight, RotateCcw, Wallet } from 'lucide-react';
-import { formatCOP, formatCrypto } from '../lib/format';
+import { formatCOP, formatCrypto, formatPercent } from '../lib/format';
 import { Change, CoinIcon } from './primitives';
 
 function PortfolioSectionImpl({
@@ -24,12 +24,14 @@ function PortfolioSectionImpl({
     >
       <div className="nx-section-heading">
         <div>
-          <span className="nx-section-index">04 / TU ESPACIO</span>
+          <span className="nx-section-index">
+            <span className="nx-section-number">04</span> Tu espacio
+          </span>
           <h2 id="nx-portfolio-title">
             Tu portafolio,
-            <br className="nx-mobile-break" /> a tu manera.
+            <br className="nx-mobile-break" /> <span>a tu manera.</span>
           </h2>
-          <p>Una vista clara de los activos en tu cuenta de demostración.</p>
+          <p className="nx-section-lead">Una vista clara de los activos en tu cuenta de demostración.</p>
         </div>
 
         <div className="nx-portfolio-total">
@@ -63,7 +65,11 @@ function PortfolioSectionImpl({
                       {coin.name}
                       <small>{coin.symbol}</small>
                     </span>
-                    <b>{coin.share.toFixed(1)}%</b>
+                    <b>{formatPercent(coin.share, 1)}</b>
+                    {/* Same share as the percentage, drawn as a bar for quick comparison. */}
+                    <span className="nx-legend-bar" aria-hidden="true">
+                      <span style={{ width: `${Math.min(coin.share, 100)}%`, background: coin.color }} />
+                    </span>
                   </div>
                 ))}
               </div>
