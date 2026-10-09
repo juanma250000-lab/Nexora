@@ -17,10 +17,12 @@ function TradeSectionImpl({
   totalWithFee,
   error,
   hasAmount,
+  onUseAll,
   onReview,
   canSubmit,
 }) {
   const isBuy = tradeType === 'buy';
+  const showError = Boolean(hasAmount && error);
 
   return (
     <section
@@ -40,7 +42,7 @@ function TradeSectionImpl({
         </p>
       </div>
 
-      <div className="nx-trade-card">
+      <div className="nx-trade-card" data-tour="trade-card">
         <div className="nx-trade-card-top">
           <span>ORDEN DE PRUEBA</span>
           <span className="nx-cop-badge">COP</span>
@@ -88,18 +90,32 @@ function TradeSectionImpl({
         </label>
         <div className="nx-amount-field">
           <span aria-hidden="true">{isBuy ? '$' : coin?.symbol}</span>
+          {/* Text, not type="number": a number field read "500.000" as 500 and
+              rejected the decimal comma Colombian users type. */}
           <input
             id="nx-amount"
-            type="number"
-            min="0"
-            step={isBuy ? '1000' : 'any'}
+            type="text"
             inputMode="decimal"
-            placeholder={isBuy ? '500000' : '0,00'}
+            autoComplete="off"
+            placeholder={isBuy ? '500.000' : '0,00'}
             value={amount}
+            aria-invalid={showError ? 'true' : undefined}
+            aria-describedby={showError ? 'nx-amount-hint nx-amount-error' : 'nx-amount-hint'}
             onChange={(event) => onAmountChange(event.target.value)}
           />
-          <small>{isBuy ? 'COP' : 'UNIDADES'}</small>
+          {!isBuy && availableBalance > 0 ? (
+            <button className="nx-amount-max" type="button" onClick={onUseAll}>
+              USAR TODO
+            </button>
+          ) : (
+            <small>{isBuy ? 'COP' : 'UNIDADES'}</small>
+          )}
         </div>
+        <p className="nx-field-hint" id="nx-amount-hint">
+          {isBuy
+            ? 'Escribe el monto en pesos, por ejemplo 500.000.'
+            : `Disponible: ${formatCrypto(availableBalance)} ${coin?.symbol || ''}. Usa coma para decimales.`}
+        </p>
 
         <div className="nx-estimate">
           <span>Recibirás aproximadamente</span>
@@ -131,8 +147,8 @@ function TradeSectionImpl({
           </div>
         </div>
 
-        {hasAmount && error && (
-          <p className="nx-field-error" role="alert">
+        {showError && (
+          <p className="nx-field-error" id="nx-amount-error" role="alert">
             {error}
           </p>
         )}

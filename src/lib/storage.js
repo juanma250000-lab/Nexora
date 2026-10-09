@@ -5,6 +5,7 @@ import {
   INITIAL_CASH,
   MAX_CACHED_PAGES,
   PORTFOLIO_KEY,
+  TOUR_KEY,
 } from './constants';
 
 /**
@@ -97,5 +98,26 @@ export function saveDemoPortfolio(portfolio) {
     localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(portfolio));
   } catch {
     // The demo portfolio stays available for this session only.
+  }
+}
+
+/**
+ * Outcome of the guided tour on this device: 'completado', 'omitido' or null
+ * when the visitor has never seen it (which is what triggers the invitation).
+ */
+export function readTourState() {
+  try {
+    const value = parse(localStorage.getItem(TOUR_KEY), null);
+    return value?.estado === 'completado' || value?.estado === 'omitido' ? value.estado : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveTourState(estado) {
+  try {
+    localStorage.setItem(TOUR_KEY, JSON.stringify({ estado, fecha: new Date().toISOString() }));
+  } catch {
+    // Without storage the invitation simply shows again on the next visit.
   }
 }

@@ -24,6 +24,7 @@ export const TOAST_DURATION_MS = 4200;
 export const CACHE_KEY = 'nexora-live-market-cop-v1';
 export const FX_CACHE_KEY = 'nexora-usd-cop-rate-v1';
 export const PORTFOLIO_KEY = 'nexora-demo-portfolio-v1';
+export const TOUR_KEY = 'nexora-guia-v1';
 export const MAX_CACHED_PAGES = 4;
 
 /* ------------------------------------------------------------------ *

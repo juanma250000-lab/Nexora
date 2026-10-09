@@ -9,6 +9,17 @@ const MARKET_ENDPOINT = 'https://api.coingecko.com/api/v3/coins/markets';
  * exhausted, so the app must be able to keep rendering from another source.
  */
 const FALLBACK_MARKET_ENDPOINT = 'https://api.coinpaprika.com/v1/tickers';
+
+/**
+ * Coinpaprika serves a logo per ticker id. Without it every row of the
+ * fallback source rendered a bare letter instead of the coin's logo.
+ * CoinIcon still falls back to the letter if the image fails to load.
+ */
+export function fallbackLogoUrl(paprikaId) {
+  const id = String(paprikaId || '').trim();
+  if (!/^[a-z0-9-]+$/i.test(id)) return null;
+  return `https://static.coinpaprika.com/coin/${id}/logo.png`;
+}
 /**
  * Coinpaprika ignores `start`, so a page is obtained by over-fetching and
  * slicing, and it hard-caps the answer at 2000 tickers. Anything beyond
@@ -188,7 +199,7 @@ export function mapFallbackData(rows, page, usdCopRate) {
       id: canonicalCoinId(row?.id),
       name: row?.name,
       symbol: String(row?.symbol || '').toUpperCase(),
-      image: null,
+      image: fallbackLogoUrl(row?.id),
       rank: Number(row?.rank) || start + index + 1,
       price: (Number(quote.price) || 0) * usdCopRate,
       change24h: Number(quote.percent_change_24h) || 0,

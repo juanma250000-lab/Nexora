@@ -1,10 +1,11 @@
 import { memo } from 'react';
 import { Globe2 } from 'lucide-react';
 import { formatCOP } from '../lib/format';
+import { MARKET_SOURCES } from '../lib/marketApi';
 import { Change } from './primitives';
 
 /** Horizontal strip with the most relevant quotes of the current page. */
-function TickerStripImpl({ coins, onSelectAsset }) {
+function TickerStripImpl({ coins, onSelectAsset, dataSource }) {
   if (!coins.length) return null;
 
   return (
@@ -27,7 +28,9 @@ function TickerStripImpl({ coins, onSelectAsset }) {
       ))}
 
       <p className="nx-ticker-source">
-        <Globe2 size={13} aria-hidden="true" /> CoinGecko
+        {/* Was hard-coded to "CoinGecko" even while the fallback source fed the page. */}
+        <Globe2 size={13} aria-hidden="true" /> Fuente:{' '}
+        {dataSource === MARKET_SOURCES.COINPAPRIKA ? 'Coinpaprika' : 'CoinGecko'}
       </p>
     </section>
   );

@@ -1,6 +1,6 @@
 import { scrollBehavior } from '../lib/format';
 
-export function Footer({ onNavigate }) {
+export function Footer({ onNavigate, onOpenGuide }) {
   return (
     <footer className="nx-footer">
       <a
@@ -40,7 +40,11 @@ export function Footer({ onNavigate }) {
         >
           Portafolio
         </a>
-        <a href="mailto:hola@nexora.example">Contacto</a>
+        {/* The old "Contacto" entry pointed at a placeholder address on the
+            reserved .example domain, so it could never reach anyone. */}
+        <button type="button" className="nx-footer-link-button" onClick={onOpenGuide} data-tour="guide-footer">
+          Guía de uso
+        </button>
         <a
           href="#legal"
           onClick={(event) => {
@@ -55,6 +59,8 @@ export function Footer({ onNavigate }) {
       <p className="nx-footer-legal" id="legal">
         NEXORA es una plataforma demostrativa. Los precios vienen de datos públicos de mercado; las
         operaciones y saldos son simulados y no representan transacciones financieras reales.
+        Privacidad: el portafolio de prueba, el historial y las preferencias se guardan solo en este
+        navegador. El acceso de prueba no envía ni almacena tu correo ni tu contraseña.
       </p>
 
       <p className="nx-copyright">© 2026 NEXORA · INFORMACIÓN PARA FINES EDUCATIVOS</p>

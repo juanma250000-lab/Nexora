@@ -32,6 +32,39 @@ export function formatTimestamp(isoValue) {
   return new Date(isoValue).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/**
+ * Parses an amount typed by a Colombian user.
+ *
+ * `<input type="number">` silently read "500.000" (the es-CO way of writing
+ * five hundred thousand pesos) as 500, and rejected "0,5". This parser accepts
+ * the local conventions instead:
+ *  - kind 'cop': dots and spaces group thousands and a comma starts the
+ *    decimal part.
+ *  - kind 'crypto': either "," or "." is the decimal separator; when both
+ *    appear, the last one is the decimal separator and the rest group digits.
+ *
+ * Returns NaN for anything that is not a non-negative number.
+ */
+export function parseAmount(value, kind = 'crypto') {
+  let raw = String(value ?? '').replace(/[\s$]/g, '');
+  if (!/^[\d.,]+$/.test(raw) || !/\d/.test(raw)) return Number.NaN;
+
+  if (kind === 'cop') {
+    const parts = raw.split(',');
+    if (parts.length > 2) return Number.NaN;
+    raw = `${parts[0].replace(/\./g, '')}.${parts[1] || ''}`;
+  } else {
+    const lastSeparator = Math.max(raw.lastIndexOf(','), raw.lastIndexOf('.'));
+    if (lastSeparator >= 0) {
+      const integer = raw.slice(0, lastSeparator).replace(/[.,]/g, '');
+      raw = `${integer}.${raw.slice(lastSeparator + 1)}`;
+    }
+  }
+
+  const parsed = Number(raw.endsWith('.') ? raw.slice(0, -1) : raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : Number.NaN;
+}
+
 export function toLowerCaseLocale(value) {
   return String(value || '').toLocaleLowerCase('es-CO');
 }

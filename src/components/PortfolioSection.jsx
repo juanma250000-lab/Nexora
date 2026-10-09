@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { ArrowRight, ChevronRight, Wallet } from 'lucide-react';
+import { memo, useState } from 'react';
+import { ArrowRight, ChevronRight, RotateCcw, Wallet } from 'lucide-react';
 import { formatCOP, formatCrypto } from '../lib/format';
 import { Change, CoinIcon } from './primitives';
 
@@ -10,8 +10,11 @@ function PortfolioSectionImpl({
   cash,
   onSelectAsset,
   onNavigate,
+  onReset,
 }) {
   const holdings = distribution.holdings;
+  // Two-step reset: wiping balances and history must never be a single misclick.
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   return (
     <section
@@ -79,7 +82,7 @@ function PortfolioSectionImpl({
           )}
         </div>
 
-        <div className="nx-holdings-panel">
+        <div className="nx-holdings-panel" data-tour="portfolio">
           <div className="nx-allocation-head">
             <span>TUS ACTIVOS</span>
             <span>PRECIO EN COP</span>
@@ -119,6 +122,31 @@ function PortfolioSectionImpl({
             </span>
             <b>{formatCOP(cash)}</b>
           </p>
+
+          <div className="nx-portfolio-reset">
+            {confirmingReset ? (
+              <>
+                <span role="alert">¿Restablecer saldos e historial de prueba?</span>
+                <button
+                  className="nx-text-action is-danger"
+                  type="button"
+                  onClick={() => {
+                    setConfirmingReset(false);
+                    onReset();
+                  }}
+                >
+                  Sí, restablecer
+                </button>
+                <button className="nx-text-action" type="button" onClick={() => setConfirmingReset(false)}>
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <button className="nx-text-action" type="button" onClick={() => setConfirmingReset(true)}>
+                <RotateCcw size={14} aria-hidden="true" /> Restablecer portafolio
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </section>

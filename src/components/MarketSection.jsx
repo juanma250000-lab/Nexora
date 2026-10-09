@@ -8,6 +8,7 @@ import { Change, CoinIcon, Sparkline } from './primitives';
 const MarketRow = memo(function MarketRow({
   coin,
   isSelected,
+  isFirst,
   onSelectAsset,
   onStartTrade,
 }) {
@@ -15,6 +16,7 @@ const MarketRow = memo(function MarketRow({
     <article
       className={`nx-market-row ${isSelected ? 'is-selected' : ''}`.trim()}
       aria-current={isSelected ? 'true' : undefined}
+      data-tour={isFirst ? 'market-row' : undefined}
     >
       <button
         className="nx-market-asset"
@@ -27,7 +29,8 @@ const MarketRow = memo(function MarketRow({
         </span>
         <CoinIcon coin={coin} />
         <span className="nx-asset-copy">
-          <b>{coin.name}</b>
+          {/* Long names are truncated with an ellipsis; the tooltip shows them whole. */}
+          <b title={coin.name}>{coin.name}</b>
           <small>{coin.symbol}</small>
         </span>
       </button>
@@ -120,8 +123,8 @@ function MarketSectionImpl({
       </div>
 
       <div className="nx-market-layout">
-        <div className="nx-market-table-wrap">
-          <div className="nx-market-toolbar">
+        <div className="nx-market-table-wrap" data-tour="market-table">
+          <div className="nx-market-toolbar" data-tour="market-search">
             <label className="nx-search">
               <Search size={16} aria-hidden="true" />
               <input
@@ -162,10 +165,11 @@ function MarketSectionImpl({
           </div>
 
           <div className="nx-market-rows">
-            {filteredCoins.map((coin) => (
+            {filteredCoins.map((coin, index) => (
               <MarketRow
                 key={coin.id}
                 coin={coin}
+                isFirst={index === 0}
                 isSelected={selectedId === coin.id}
                 onSelectAsset={onSelectAsset}
                 onStartTrade={onStartTrade}

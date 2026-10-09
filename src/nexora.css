@@ -27,13 +27,15 @@
   box-sizing: border-box;
 }
 
-.nx-app button,
-.nx-app input,
-.nx-app select {
+/* Zero-specificity resets: wrapped in :where() so component classes such as
+   .nx-button-primary can set their own colour and type. With the plain
+   `.nx-app button` selector (0,1,1) the reset silently beat every one-class
+   button rule, leaving light text on the light accent button. */
+:where(.nx-app) :where(button, input, select) {
   font: inherit;
 }
 
-.nx-app button {
+:where(.nx-app) button {
   color: inherit;
   transition: color var(--nx-dur-fast) var(--nx-ease),
     background-color var(--nx-dur-fast) var(--nx-ease),
@@ -51,7 +53,7 @@
   outline-offset: 3px;
 }
 
-.nx-app button:disabled {
+:where(.nx-app) button:disabled {
   cursor: not-allowed;
   opacity: 0.42;
 }
@@ -546,7 +548,13 @@
   position: relative;
   display: grid;
   min-height: 470px;
-  place-items: center;
+  /* Card on the first row; caption and "Mercado activo" note share the second
+     one, so neither can ever cover the quotes inside the card. */
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: center;
+  align-items: center;
+  justify-items: center;
+  column-gap: var(--nx-space-3);
   animation: nx-rise 750ms 100ms var(--nx-ease-out) both;
 }
 
@@ -572,6 +580,7 @@
 .nx-hero-market-glass {
   position: relative;
   z-index: 1;
+  grid-column: 1 / -1;
   width: min(100%, 500px);
   padding: 22px 24px 18px;
   border: 1px solid var(--nx-glass-line);
@@ -732,10 +741,12 @@
 }
 
 .nx-floating-note {
-  position: absolute;
+  position: relative;
   z-index: 2;
-  right: -8px;
-  bottom: 28px;
+  grid-row: 2;
+  grid-column: 2;
+  justify-self: end;
+  margin-top: -10px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -774,10 +785,11 @@
 }
 
 .nx-orbit-caption {
-  position: absolute;
-  top: 30px;
-  right: 4px;
-  color: rgba(166, 185, 208, 0.5);
+  grid-row: 2;
+  grid-column: 1;
+  justify-self: start;
+  margin-top: 4px;
+  color: var(--nx-dim);
   font-family: var(--nx-font-mono);
   font-size: var(--nx-fs-3xs);
   letter-spacing: 0.16em;
@@ -1403,8 +1415,11 @@
 
 .nx-aside-stat {
   display: flex;
+  /* Market caps in pesos reach 20+ characters: let the value drop below its
+     label instead of spilling out of the narrow side panel. */
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 10px;
+  gap: 2px 10px;
   margin: 10px 0;
   color: var(--nx-muted);
   font-size: var(--nx-fs-xs);
@@ -1416,6 +1431,7 @@
   font-size: var(--nx-fs-xs);
   font-weight: var(--nx-fw-medium);
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .nx-aside-buy {
@@ -2230,7 +2246,8 @@
   gap: var(--nx-space-4);
 }
 
-.nx-footer-links a {
+.nx-footer-links a,
+.nx-footer-link-button {
   padding: 4px;
   border-radius: var(--nx-r-xs);
   color: var(--nx-muted);
@@ -2238,7 +2255,8 @@
   transition: color var(--nx-dur-fast) var(--nx-ease);
 }
 
-.nx-footer-links a:hover {
+.nx-footer-links a:hover,
+.nx-footer-link-button:hover {
   color: var(--nx-cyan);
 }
 
@@ -2831,16 +2849,6 @@
     transform: translateY(-3px);
   }
 
-  .nx-floating-note {
-    right: 8px;
-    bottom: 10px;
-  }
-
-  .nx-orbit-caption {
-    top: 16px;
-    right: 16px;
-  }
-
   .nx-ticker-strip {
     gap: var(--nx-space-3);
     overflow-x: auto;
@@ -2969,10 +2977,10 @@
   }
 
   .nx-account-button {
-    min-height: 38px;
+    min-height: 40px;
     gap: 6px;
     padding: 0 11px;
-    font-size: var(--nx-fs-3xs);
+    font-size: var(--nx-fs-xs);
   }
 
   .nx-account-button svg {
@@ -3068,12 +3076,10 @@
   }
 
   .nx-preview-coin .nx-change {
-    font-size: 9px;
+    font-size: var(--nx-fs-3xs);
   }
 
   .nx-floating-note {
-    right: 0;
-    bottom: 0;
     padding: 9px 11px;
   }
 
@@ -3220,7 +3226,7 @@
 
   .nx-rank {
     width: 16px;
-    font-size: 9px;
+    font-size: var(--nx-fs-3xs);
   }
 
   .nx-asset-copy b {
@@ -3230,7 +3236,7 @@
   .nx-market-pagination {
     min-height: 54px;
     gap: var(--nx-space-3);
-    font-size: 9px;
+    font-size: var(--nx-fs-3xs);
   }
 
   .nx-market-pagination button {
@@ -3331,7 +3337,7 @@
 
   .nx-demo-stamp {
     margin-top: var(--nx-space-4);
-    font-size: 9px;
+    font-size: var(--nx-fs-3xs);
   }
 
   .nx-trade-card {
@@ -3370,7 +3376,7 @@
     gap: 8px;
   }
 
-  .nx-activity-section .nx-section-heading > .nx-button {
+  .nx-activity-section .nx-section-heading > .nx-demo-badge {
     justify-self: start;
   }
 
@@ -3402,7 +3408,7 @@
 
   .nx-activity-value small {
     max-width: 92px;
-    font-size: 9px;
+    font-size: var(--nx-fs-3xs);
     text-align: right;
   }
 
@@ -3482,5 +3488,354 @@
 
   .nx-data-cell {
     font-size: var(--nx-fs-3xs);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Guided tour ("Guía de uso")
+   -------------------------------------------------------------------------- */
+
+.nx-tour {
+  position: fixed;
+  z-index: calc(var(--nx-z-modal) + 5);
+  inset: 0;
+}
+
+/* The spotlight dims everything around the target with one huge shadow, so
+   the highlighted element stays crisp without cloning it. */
+.nx-tour-spot {
+  position: fixed;
+  border: 1px solid rgba(125, 240, 203, 0.55);
+  border-radius: var(--nx-r-md);
+  box-shadow: 0 0 0 9999px rgba(3, 6, 11, 0.74), 0 0 0 4px rgba(125, 240, 203, 0.14);
+  pointer-events: none;
+  transition: top var(--nx-dur) var(--nx-ease), left var(--nx-dur) var(--nx-ease),
+    width var(--nx-dur) var(--nx-ease), height var(--nx-dur) var(--nx-ease);
+}
+
+.nx-tour.is-centered .nx-tour-spot {
+  inset: 0;
+  width: auto !important;
+  height: auto !important;
+  border: 0;
+  border-radius: 0;
+  background: rgba(3, 6, 11, 0.74);
+  box-shadow: none;
+}
+
+.nx-tour-popover {
+  position: fixed;
+  width: min(380px, calc(100vw - 24px));
+  padding: var(--nx-space-5);
+  border: 1px solid var(--nx-glass-line);
+  border-radius: var(--nx-r-lg);
+  background: linear-gradient(160deg, rgba(31, 45, 66, 0.96), rgba(12, 18, 29, 0.97));
+  box-shadow: var(--nx-shadow-3), var(--nx-inset-hi);
+  color: var(--nx-ink-2);
+  animation: nx-fade-in 180ms var(--nx-ease) both;
+}
+
+.nx-tour.is-centered .nx-tour-popover {
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%);
+}
+
+.nx-tour-popover:focus {
+  outline: none;
+}
+
+.nx-tour-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-3);
+}
+
+.nx-tour-count {
+  color: var(--nx-cyan);
+  font-family: var(--nx-font-mono);
+  font-size: var(--nx-fs-2xs);
+  letter-spacing: var(--nx-tracking-mono);
+  text-transform: uppercase;
+}
+
+.nx-tour-close {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--nx-line);
+  border-radius: var(--nx-r-sm);
+  color: var(--nx-muted);
+}
+
+.nx-tour-close:hover {
+  border-color: var(--nx-line-strong);
+  color: var(--nx-ink);
+}
+
+.nx-tour-progress {
+  height: 3px;
+  margin: var(--nx-space-3) 0 var(--nx-space-4);
+  overflow: hidden;
+  border-radius: var(--nx-r-pill);
+  background: var(--nx-line-soft);
+}
+
+.nx-tour-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--nx-accent-gradient);
+  transition: width var(--nx-dur) var(--nx-ease);
+}
+
+.nx-tour-popover h2 {
+  color: var(--nx-ink);
+  font-size: var(--nx-fs-lg);
+  font-weight: var(--nx-fw-bold);
+  line-height: var(--nx-lh-snug);
+}
+
+.nx-tour-popover h2:focus {
+  outline: none;
+}
+
+.nx-tour-popover p {
+  margin-top: var(--nx-space-2);
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-sm);
+  line-height: var(--nx-lh-normal);
+}
+
+.nx-tour-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-3);
+  margin-top: var(--nx-space-5);
+}
+
+.nx-tour-nav {
+  display: flex;
+  gap: var(--nx-space-2);
+}
+
+.nx-tour-nav .nx-button {
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.nx-tour-skip {
+  color: var(--nx-muted);
+}
+
+/* First-visit invitation -------------------------------------------------- */
+
+.nx-tour-invite {
+  position: fixed;
+  z-index: var(--nx-z-toast);
+  left: 24px;
+  bottom: 24px;
+  display: grid;
+  width: min(340px, calc(100vw - 32px));
+  gap: var(--nx-space-3);
+  padding: var(--nx-space-4);
+  border: 1px solid var(--nx-glass-line);
+  border-radius: var(--nx-r-md);
+  background: var(--nx-glass-strong);
+  box-shadow: var(--nx-shadow-3), var(--nx-inset-hi);
+  -webkit-backdrop-filter: var(--nx-blur);
+  backdrop-filter: var(--nx-blur);
+  animation: nx-toast-in 260ms var(--nx-ease-out) both;
+}
+
+.nx-tour-invite p {
+  display: grid;
+  gap: 2px;
+  font-size: var(--nx-fs-sm);
+}
+
+.nx-tour-invite b {
+  color: var(--nx-ink);
+}
+
+.nx-tour-invite span {
+  color: var(--nx-muted);
+}
+
+.nx-tour-invite div {
+  display: flex;
+  gap: var(--nx-space-2);
+}
+
+.nx-tour-invite .nx-button {
+  min-height: 38px;
+  padding: 0 14px;
+}
+
+/* Help button in the header ----------------------------------------------- */
+
+.nx-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);
+}
+
+.nx-help-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--nx-line);
+  border-radius: var(--nx-r-sm);
+  color: var(--nx-ink-2);
+  font-size: var(--nx-fs-sm);
+  font-weight: var(--nx-fw-semibold);
+}
+
+.nx-help-button:hover {
+  border-color: var(--nx-line-strong);
+  background: rgba(163, 185, 216, 0.08);
+  color: var(--nx-ink);
+}
+
+@media (max-width: 1080px) {
+  .nx-help-button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .nx-help-button {
+    width: 40px;
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Bottom sheet: always reachable with the thumb and never off screen. */
+  .nx-tour-popover,
+  .nx-tour.is-centered .nx-tour-popover {
+    top: auto !important;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 12px !important;
+    width: auto;
+    padding: var(--nx-space-4);
+    transform: none;
+  }
+
+  .nx-tour-actions {
+    flex-wrap: wrap;
+  }
+
+  .nx-tour-nav {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+
+  .nx-tour-invite {
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
+
+/* Activity: demo badge and history toggle -------------------------------- */
+
+.nx-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: end;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid var(--nx-line);
+  border-radius: var(--nx-r-sm);
+  background: var(--nx-glass-tint);
+  color: var(--nx-ink-2);
+  font-size: var(--nx-fs-xs);
+  font-weight: var(--nx-fw-semibold);
+}
+
+.nx-activity-toggle {
+  display: flex;
+  margin: var(--nx-space-3) auto;
+}
+
+/* Portfolio: reset with inline confirmation ------------------------------- */
+
+.nx-portfolio-reset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nx-space-2) var(--nx-space-3);
+  margin-top: var(--nx-space-3);
+  color: var(--nx-muted);
+  font-size: var(--nx-fs-xs);
+}
+
+.nx-portfolio-reset .nx-text-action.is-danger {
+  color: var(--nx-down);
+}
+
+/* Trade form: field hint and "use all" shortcut --------------------------- */
+
+.nx-field-hint {
+  margin-top: 6px;
+  color: var(--nx-dim);
+  font-size: var(--nx-fs-xs);
+}
+
+.nx-amount-max {
+  padding: 4px 8px;
+  border: 1px solid var(--nx-line);
+  border-radius: var(--nx-r-xs);
+  color: var(--nx-cyan);
+  font-size: var(--nx-fs-2xs);
+  font-weight: var(--nx-fw-bold);
+  letter-spacing: 0.04em;
+}
+
+.nx-amount-max:hover {
+  border-color: rgba(125, 240, 203, 0.4);
+  background: var(--nx-accent-soft);
+}
+
+/* Auth form: inline validation -------------------------------------------- */
+
+.nx-auth-form .nx-input-error {
+  margin: -4px 0 4px;
+  color: var(--nx-down);
+  font-size: var(--nx-fs-xs);
+}
+
+.nx-auth-form > input[aria-invalid='true'],
+.nx-password-wrap:has(input[aria-invalid='true']) {
+  border-color: rgba(255, 133, 144, 0.6);
+}
+
+/* Narrow phones: two preview quotes with room for the full price instead of
+   three truncated ones ("$ 264.503.6…"). */
+@media (max-width: 420px) {
+  .nx-preview-coins {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nx-preview-coin:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+/* The floating mobile bar appears below 900px: keep the invitation above it. */
+@media (max-width: 900px) {
+  .nx-tour-invite {
+    bottom: 96px;
   }
 }

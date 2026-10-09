@@ -1,4 +1,4 @@
-import { memo, useId, useMemo } from 'react';
+import { memo, useId, useMemo, useState } from 'react';
 import { pricePath } from '../lib/format';
 
 // Literal colours: SVG presentation attributes are not reliably able to
@@ -79,10 +79,12 @@ export const Change = memo(function Change({ value, className = '' }) {
   );
 });
 
-/** Coin logo with a letter fallback when the CDN image is unavailable. */
+/** Coin logo with a letter fallback when the CDN image is missing or fails to load. */
 export const CoinIcon = memo(function CoinIcon({ coin, size = 'normal' }) {
   const large = size === 'large';
-  if (coin.image) {
+  // Remembers which URL failed, so a new coin gets a fresh attempt.
+  const [failedSrc, setFailedSrc] = useState(null);
+  if (coin.image && coin.image !== failedSrc) {
     return (
       <img
         className={`nx-coin-icon ${large ? 'is-large' : ''}`.trim()}
@@ -92,6 +94,7 @@ export const CoinIcon = memo(function CoinIcon({ coin, size = 'normal' }) {
         height={large ? 49 : 30}
         loading="lazy"
         decoding="async"
+        onError={() => setFailedSrc(coin.image)}
       />
     );
   }
@@ -100,7 +103,7 @@ export const CoinIcon = memo(function CoinIcon({ coin, size = 'normal' }) {
       className={`nx-coin-icon nx-coin-fallback ${large ? 'is-large' : ''}`.trim()}
       aria-hidden="true"
     >
-      {coin.symbol.slice(0, 1)}
+      {String(coin.symbol || coin.name || '?').slice(0, 1)}
     </span>
   );
 });
