@@ -18,6 +18,8 @@ import { createElement } from 'react';
 import Nexora from '../src/Nexora.jsx';
 import { MarketSection } from '../src/components/MarketSection.jsx';
 import { DetailSection } from '../src/components/DetailSection.jsx';
+import { TickerStrip } from '../src/components/TickerStrip.jsx';
+import { GuidedTour } from '../src/components/GuidedTour.jsx';
 import { MARKET_ERROR_MESSAGES } from '../src/lib/retry.js';
 
 const noop = () => {};
@@ -119,6 +121,15 @@ const nextDisabled = (html) => {
 const lastPage = renderState({ hasMore: false, marketPage: 4 });
 const middlePage = renderState({ hasMore: true, marketPage: 4 });
 
+/** The ticker must name the source that is really feeding it. */
+const tickerFallback = renderToString(
+  createElement(TickerStrip, { coins: [sampleCoin], onSelectAsset: noop, dataSource: 'coinpaprika' })
+);
+const tickerPrimary = renderToString(
+  createElement(TickerStrip, { coins: [sampleCoin], onSelectAsset: noop, dataSource: 'coingecko' })
+);
+const tour = renderToString(createElement(GuidedTour, { onFinish: noop }));
+
 const checks = [
   ['render produced markup', markup.length > 5000],
   ['brand is present', markup.includes('NEXORA')],
@@ -167,6 +178,19 @@ const checks = [
   ['chart never shows the dead-end copy while loading', !detailFallback.includes('Gráfico en preparación')],
   ['chart draws the bundled sparkline', detailWithHistory.includes('nx-chart-svg')],
   ['chart panel has no NaN', !detailFallback.includes('NaN') && !detailWithHistory.includes('NaN')],
+
+  /* help, navigation and links ------------------------------------- */
+  ['guide button in the header', markup.includes('data-tour="guide"') && markup.includes('Guía')],
+  ['guide link in the footer', markup.includes('Guía de uso')],
+  ['no placeholder e-mail left', !markup.includes('nexora.example')],
+  ['privacy copy behind the Privacidad link', markup.includes('Privacidad: el portafolio de prueba')],
+  ['portfolio can be reset', markup.includes('Restablecer portafolio')],
+  ['amount field accepts local format', markup.includes('placeholder="500.000"') && !markup.includes('type="number"')],
+  ['ticker names the fallback source', tickerFallback.includes('Coinpaprika') && !tickerFallback.includes('CoinGecko')],
+  ['ticker names the primary source', tickerPrimary.includes('CoinGecko')],
+  ['tour renders as an accessible dialog', tour.includes('role="dialog"') && tour.includes('aria-modal="true"')],
+  ['tour shows progress', tour.includes('Paso 1 de') && tour.includes('role="progressbar"')],
+  ['tour offers to skip', tour.includes('Saltar guía')],
 
   /* error copy ------------------------------------------------------- */
   ['every failure reason has Spanish copy', Object.values(MARKET_ERROR_MESSAGES).every((m) => /[áéíóúñ¿]/i.test(m))],

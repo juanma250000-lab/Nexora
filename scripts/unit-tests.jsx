@@ -13,6 +13,7 @@ import {
   FALLBACK_MAX_PAGE,
   MARKET_SOURCES,
   MarketApiError,
+  fallbackLogoUrl,
   mapFallbackData,
   mapMarketData,
   requestFallbackMarketPage,
@@ -25,7 +26,11 @@ import { MARKET_ERROR_MESSAGES, nextRetryDelay, parseRetryAfter } from '../src/l
 import { canonicalCoinId, COIN_ID_ALIASES } from '../src/lib/coinAliases.js';
 import { PAGE_SIZE, REFRESH_MS, resolveNavFromSection } from '../src/lib/constants.js';
 import { mergeCoins } from '../src/lib/collections.js';
-import { formatClock, formatCOP, formatCrypto, pricePath, toLowerCaseLocale } from '../src/lib/format.js';
+import { formatClock, formatCOP, formatCrypto, parseAmount, pricePath, toLowerCaseLocale } from '../src/lib/format.js';
+import { useTrading } from '../src/hooks/useTrading.js';
+import { validateDemoAccess } from '../src/components/AuthModal.jsx';
+import { TOUR_STEPS } from '../src/lib/tourSteps.js';
+import { readTourState, saveTourState } from '../src/lib/storage.js';
 
 /* ------------------------------------------------------------------ *
  * Tiny assertion helpers
@@ -239,7 +244,18 @@ test('mapFallbackData convierte a COP y marca el historial vacío', () => {
   assertEqual(coin.change7d, -4.5, 'variación 7 d');
   assertEqual(coin.rank, 1, 'rank');
   assert(Array.isArray(coin.history) && coin.history.length === 0, 'sin sparkline');
-  assertEqual(coin.image, null, 'sin logotipo (usa el icono de respaldo)');
+  assertEqual(
+    coin.image,
+    'https://static.coinpaprika.com/coin/pap-0/logo.png',
+    'logotipo de Coinpaprika (antes quedaba la letra de respaldo)'
+  );
+});
+
+test('fallbackLogoUrl rechaza ids que podrían alterar la URL', () => {
+  assertEqual(fallbackLogoUrl('btc-bitcoin'), 'https://static.coinpaprika.com/coin/btc-bitcoin/logo.png', 'id válido');
+  assertEqual(fallbackLogoUrl('../../evil'), null, 'ruta relativa');
+  assertEqual(fallbackLogoUrl('a b'), null, 'espacios');
+  assertEqual(fallbackLogoUrl(undefined), null, 'sin id');
 });
 
 /* ------------------------------------------------------------------ *
@@ -730,6 +746,96 @@ test('los formateadores no producen NaN ni undefined', () => {
   // conservan porque ambas partes de la comparación pasan por la misma rutina.
   assertEqual(toLowerCaseLocale('  ÁvAl  '.trim()), 'ával', 'normalización de búsqueda');
   assertEqual(formatClock(null), 'Esperando cotizaciones', 'reloj sin fecha');
+});
+
+/* ------------------------------------------------------------------ *
+ * Amounts, trade validation, demo access and tour (regressions)
+ * ------------------------------------------------------------------ */
+
+test('parseAmount entiende pesos escritos al estilo colombiano', () => {
+  assertEqual(parseAmount('500.000', 'cop'), 500000, '500.000 son quinientos mil, no 500');
+  assertEqual(parseAmount('500000', 'cop'), 500000, 'sin separadores');
+  assertEqual(parseAmount('1.250.000,50', 'cop'), 1250000.5, 'miles y decimales');
+  assertEqual(parseAmount('$ 2.000', 'cop'), 2000, 'símbolo y espacios');
+  assert(Number.isNaN(parseAmount('1,2,3', 'cop')), 'dos comas');
+  assert(Number.isNaN(parseAmount('-5', 'cop')), 'negativo');
+  assert(Number.isNaN(parseAmount('abc', 'cop')), 'texto');
+  assert(Number.isNaN(parseAmount('.', 'cop')), 'solo separador');
+});
+
+test('parseAmount acepta coma o punto decimal en cripto', () => {
+  assertEqual(parseAmount('0,5', 'crypto'), 0.5, 'coma');
+  assertEqual(parseAmount('0.5', 'crypto'), 0.5, 'punto');
+  assertEqual(parseAmount('1.234,56', 'crypto'), 1234.56, 'formato es-CO');
+  assertEqual(parseAmount('1,234.56', 'crypto'), 1234.56, 'formato en-US');
+  assertEqual(parseAmount(',25', 'crypto'), 0.25, 'sin cero inicial');
+  assert(Number.isNaN(parseAmount('', 'crypto')), 'vacío');
+  assert(Number.isNaN(parseAmount('1e5', 'crypto')), 'notación científica');
+});
+
+const btc = { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', price: 200_000_000 };
+
+test('useTrading valida compras con el monto real en pesos', () => {
+  const ok = useTrading({ coin: btc, tradeType: 'buy', amount: '500.000', cash: 25_000_000, balances: {} });
+  assertEqual(ok.currentAmount, 500000, 'monto');
+  assertEqual(ok.error, null, 'sin error');
+  assert(ok.canSubmit, 'se puede revisar');
+  assertClose(ok.receivedCrypto, 0.0025, 'BTC recibidos');
+
+  const broke = useTrading({ coin: btc, tradeType: 'buy', amount: '30.000.000', cash: 25_000_000, balances: {} });
+  assert(/saldo/.test(broke.error), 'saldo insuficiente');
+
+  const junk = useTrading({ coin: btc, tradeType: 'buy', amount: '12abc', cash: 1, balances: {} });
+  assert(/solo números/.test(junk.error) && !junk.canSubmit && junk.hasInput, 'texto inválido');
+});
+
+test('useTrading valida ventas contra el saldo y bloquea precios en 0', () => {
+  const sell = useTrading({ coin: btc, tradeType: 'sell', amount: '0,1', cash: 0, balances: { bitcoin: 0.125 } });
+  assertEqual(sell.error, null, 'venta válida');
+  assertClose(sell.tradeValueCOP, 20_000_000, 'valor');
+
+  const tooMuch = useTrading({ coin: btc, tradeType: 'sell', amount: '1', cash: 0, balances: { bitcoin: 0.125 } });
+  assert(/No tienes suficiente BTC/.test(tooMuch.error), 'saldo cripto insuficiente');
+
+  const free = useTrading({ coin: { ...btc, price: 0 }, tradeType: 'buy', amount: '1000', cash: 1e9, balances: {} });
+  assert(/precio/.test(free.error), 'sin precio no se puede comprar (antes cobraba sin entregar nada)');
+
+  const empty = useTrading({ coin: btc, tradeType: 'buy', amount: '', cash: 1, balances: {} });
+  assert(!empty.hasInput && !empty.canSubmit, 'campo vacío');
+});
+
+test('validateDemoAccess da mensajes en español', () => {
+  const empty = validateDemoAccess({ email: '', password: '' });
+  assert(/correo/.test(empty.email) && /contraseña/.test(empty.password), 'campos vacíos');
+  const bad = validateDemoAccess({ email: 'sin-arroba', password: '12' });
+  assert(/formato/.test(bad.email) && /al menos 4/.test(bad.password), 'formato y longitud');
+  const good = validateDemoAccess({ email: 'tu@correo.com', password: '1234' });
+  assertEqual(Object.keys(good).filter((key) => good[key]).length, 0, 'datos válidos');
+});
+
+test('la guía tiene pasos completos en español y apunta a anclas existentes', () => {
+  assert(TOUR_STEPS.length >= 5, 'al menos cinco pasos');
+  const ids = new Set();
+  for (const step of TOUR_STEPS) {
+    assert(step.title && step.body, `paso ${step.id} sin texto`);
+    assert(!ids.has(step.id), `id repetido ${step.id}`);
+    ids.add(step.id);
+    (step.target || []).forEach((selector) =>
+      assert(/^[data-tour="[a-z-]+"]$/.test(selector), `selector inesperado ${selector}`)
+    );
+  }
+});
+
+test('el estado de la guía se guarda y se lee', () => {
+  localStorage.clear();
+  assertEqual(readTourState(), null, 'visitante nuevo');
+  saveTourState('omitido');
+  assertEqual(readTourState(), 'omitido', 'omitida');
+  saveTourState('completado');
+  assertEqual(readTourState(), 'completado', 'completada');
+  localStorage.setItem('nexora-guia-v1', '{roto');
+  assertEqual(readTourState(), null, 'JSON corrupto no rompe nada');
+  localStorage.clear();
 });
 
 /* ------------------------------------------------------------------ *

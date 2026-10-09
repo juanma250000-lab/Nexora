@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "NEXORA: servidor de desarrollo",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^x{0}$" },
+        "background": {
+          "activesBegin": ".",
+          "beginsPattern": "VITE",
+          "endsPattern": "Local:"
+        }
+      },
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "NEXORA: pruebas unitarias y de render",
+      "type": "npm",
+      "script": "test",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "NEXORA: pruebas en navegador (E2E)",
+      "type": "npm",
+      "script": "test:e2e",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "NEXORA: compilar para producción",
+      "type": "npm",
+      "script": "build",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

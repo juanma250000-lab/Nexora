@@ -1,9 +1,15 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, Clock3, ShieldCheck } from 'lucide-react';
 import { formatCOP, formatCrypto, formatTimestamp } from '../lib/format';
 
-function ActivitySectionImpl({ activity, onNavigate, onNotice }) {
-  const latest = activity.slice(0, 4);
+/** Entries visible before the list is expanded. */
+const COLLAPSED_COUNT = 4;
+
+function ActivitySectionImpl({ activity, onNavigate }) {
+  const [expanded, setExpanded] = useState(false);
+  // Older entries used to be unreachable: only the latest four were rendered.
+  const visible = expanded ? activity : activity.slice(0, COLLAPSED_COUNT);
+  const hiddenCount = activity.length - COLLAPSED_COUNT;
 
   return (
     <section
@@ -21,42 +27,56 @@ function ActivitySectionImpl({ activity, onNavigate, onNotice }) {
           <p>Historial local de las operaciones simuladas en este dispositivo.</p>
         </div>
 
-        <button className="nx-button nx-button-quiet" type="button" onClick={onNotice}>
-          Solo demostración <ShieldCheck size={15} aria-hidden="true" />
-        </button>
+        {/* A label, not a button: it used to look clickable but only raised a toast. */}
+        <p className="nx-demo-badge">
+          <ShieldCheck size={15} aria-hidden="true" /> Solo demostración
+        </p>
       </div>
 
-      <div className="nx-activity-list">
-        {latest.length ? (
-          latest.map((item) => (
-            <article className="nx-activity-row" key={item.id}>
-              <span
-                className={`nx-activity-icon ${item.type === 'buy' ? 'is-buy' : 'is-sell'}`.trim()}
-                aria-hidden="true"
+      <div className="nx-activity-list" data-tour="activity">
+        {visible.length ? (
+          <>
+            {visible.map((item) => (
+              <article className="nx-activity-row" key={item.id}>
+                <span
+                  className={`nx-activity-icon ${item.type === 'buy' ? 'is-buy' : 'is-sell'}`.trim()}
+                  aria-hidden="true"
+                >
+                  {item.type === 'buy' ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}
+                </span>
+
+                <span className="nx-activity-copy">
+                  <b>
+                    {item.type === 'buy' ? 'Compra simulada' : 'Venta simulada'} de {item.name}
+                  </b>
+                  <small>
+                    {formatTimestamp(item.date)} · {item.id}
+                  </small>
+                </span>
+
+                <span className="nx-activity-quantity">
+                  {item.type === 'buy' ? '+' : '−'}
+                  {formatCrypto(item.quantity)} {item.symbol}
+                </span>
+
+                <span className="nx-activity-value">
+                  {formatCOP(item.total)}
+                  <small>Valor de referencia</small>
+                </span>
+              </article>
+            ))}
+
+            {hiddenCount > 0 && (
+              <button
+                className="nx-text-action nx-activity-toggle"
+                type="button"
+                aria-expanded={expanded}
+                onClick={() => setExpanded((value) => !value)}
               >
-                {item.type === 'buy' ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}
-              </span>
-
-              <span className="nx-activity-copy">
-                <b>
-                  {item.type === 'buy' ? 'Compra simulada' : 'Venta simulada'} de {item.name}
-                </b>
-                <small>
-                  {formatTimestamp(item.date)} · {item.id}
-                </small>
-              </span>
-
-              <span className="nx-activity-quantity">
-                {item.type === 'buy' ? '+' : '−'}
-                {formatCrypto(item.quantity)} {item.symbol}
-              </span>
-
-              <span className="nx-activity-value">
-                {formatCOP(item.total)}
-                <small>Valor de referencia</small>
-              </span>
-            </article>
-          ))
+                {expanded ? 'Ver menos' : `Ver todo el historial (${hiddenCount} más)`}
+              </button>
+            )}
+          </>
         ) : (
           <div className="nx-empty-state nx-activity-empty">
             <span className="nx-empty-mark">

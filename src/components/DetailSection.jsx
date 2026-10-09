@@ -38,7 +38,7 @@ function DetailSectionImpl({ coin, usdCopRate }) {
       </div>
 
       <div className="nx-detail-layout">
-        <div className="nx-chart-panel">
+        <div className="nx-chart-panel" data-tour="detail-chart">
           <div className="nx-chart-panel-head">
             <div>
               <span>EVOLUCIÓN DEL PRECIO</span>

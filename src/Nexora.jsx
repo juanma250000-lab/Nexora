@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ALLOCATION_COLORS, NAV_ITEMS, OBSERVED_SECTIONS, resolveNavFromSection } from './lib/constants';
+import { readTourState, saveTourState } from './lib/storage';
 import { formatClock, formatCrypto, scrollBehavior, toLowerCaseLocale } from './lib/format';
 import { useCountdown } from './hooks/useCountdown';
 import { useDemoPortfolio, useToast } from './hooks/useDemoPortfolio';
@@ -12,6 +13,7 @@ import { ActivitySection } from './components/ActivitySection';
 import { AuthModal } from './components/AuthModal';
 import { DetailSection } from './components/DetailSection';
 import { Footer } from './components/Footer';
+import { GuidedTour, TourInvite } from './components/GuidedTour';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { MarketSection } from './components/MarketSection';
@@ -21,6 +23,19 @@ import { TickerStrip } from './components/TickerStrip';
 import { Toast } from './components/Toast';
 import { TradeReviewModal } from './components/TradeReviewModal';
 import { TradeSection } from './components/TradeSection';
+
+/** Section ids that can be opened directly with a URL hash (e.g. /#portafolio). */
+const LINKABLE_IDS = new Set([...NAV_ITEMS.map((item) => item.id), ...OBSERVED_SECTIONS]);
+
+/** Delay before inviting a first-time visitor to the tour. */
+const TOUR_INVITE_DELAY_MS = 1500;
+
+/** Largest sell amount that never exceeds the balance once printed as text. */
+function balanceToInput(balance) {
+  if (!(balance > 0)) return '';
+  const floored = Math.floor(balance * 1e8) / 1e8;
+  return floored.toFixed(8).replace(/\.?0+$/, '').replace('.', ',');
+}
 
 const MARKET_LABELS = {
   'en-vivo': 'Mercado en vivo',
@@ -46,7 +61,7 @@ export default function Nexora() {
     refresh,
     pageSize,
   } = useMarket(usdCopRate, notify);
-  const { balances, cash, activity, executeTrade } = useDemoPortfolio();
+  const { balances, cash, activity, executeTrade, resetPortfolio } = useDemoPortfolio();
   // Seconds left until the next automatic market retry (0 when not retrying).
   const retryInSeconds = useCountdown(nextRetryAt);
 
@@ -59,6 +74,8 @@ export default function Nexora() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('signup');
   const [isDemoConnected, setIsDemoConnected] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourInvite, setTourInvite] = useState(false);
 
   /* ---------------------------------------------------------------- *
    * Derived state
@@ -196,10 +213,38 @@ export default function Nexora() {
     const resolved = resolveNavFromSection(target, type);
     if (resolved) setActiveSection(resolved);
 
+    // Reflect the section in the URL so it can be shared or reloaded. Replace,
+    // not push: in-page jumps must not fill the back button history.
+    try {
+      if (window.location.hash !== `#${navId}`) window.history.replaceState(null, '', `#${navId}`);
+    } catch {
+      /* history can be unavailable in sandboxed frames; navigation still works */
+    }
+
     document
       .getElementById(target)
       ?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
   }, []);
+
+  // Direct access: /#mercado, /#portafolio… The browser cannot do this alone
+  // because the sections do not exist yet when it parses the URL.
+  useEffect(() => {
+    const openHash = () => {
+      let id = '';
+      try {
+        id = decodeURIComponent(window.location.hash.slice(1));
+      } catch {
+        return; // malformed hash such as "#%E0": ignore it, never crash
+      }
+      if (LINKABLE_IDS.has(id)) goTo(id);
+    };
+    const frame = window.requestAnimationFrame(openHash);
+    window.addEventListener('hashchange', openHash);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('hashchange', openHash);
+    };
+  }, [goTo]);
 
   const selectAsset = useCallback(
     (coinId) => {
@@ -208,6 +253,17 @@ export default function Nexora() {
     },
     [goTo]
   );
+
+  // A buy amount is pesos and a sell amount is units: carrying the text across
+  // the switch would turn "500.000" pesos into 500.000 coins.
+  const changeTradeType = useCallback((type) => {
+    if (tradeTypeRef.current !== type) setAmount('');
+    tradeTypeRef.current = type;
+    setTradeType(type);
+    setActiveSection((current) =>
+      current === 'comprar' || current === 'vender' ? resolveNavFromSection('comprar', type) : current
+    );
+  }, []);
 
   const startTrade = useCallback(
     (coin, type = 'buy') => {
@@ -255,6 +311,54 @@ export default function Nexora() {
     );
   }, [executeTrade, notify, selectedCoin, tradeType, trading]);
 
+  const fillWholeBalance = useCallback(() => {
+    setAmount(balanceToInput(trading.availableBalance));
+  }, [trading.availableBalance]);
+
+  const handleResetPortfolio = useCallback(() => {
+    resetPortfolio();
+    setAmount('');
+    notify('success', 'Portafolio de prueba restablecido a sus valores iniciales.');
+  }, [notify, resetPortfolio]);
+
+  const handleSignOut = useCallback(() => {
+    setIsDemoConnected(false);
+    notify('success', 'Sesión de prueba cerrada en este dispositivo.');
+  }, [notify]);
+
+  /* ---------------------------------------------------------------- *
+   * Guided tour
+   * ---------------------------------------------------------------- */
+
+  useEffect(() => {
+    if (readTourState()) return undefined;
+    const timer = window.setTimeout(() => setTourInvite(true), TOUR_INVITE_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const openGuide = useCallback(() => {
+    setTourInvite(false);
+    setAuthOpen(false);
+    setTradeReviewOpen(false);
+    setTourOpen(true);
+  }, []);
+
+  const dismissInvite = useCallback(() => {
+    setTourInvite(false);
+    saveTourState('omitido');
+  }, []);
+
+  const finishGuide = useCallback(
+    (estado) => {
+      setTourOpen(false);
+      saveTourState(estado);
+      if (estado === 'completado') {
+        notify('success', 'Guía completada. Puedes volver a abrirla desde el botón «Guía».');
+      }
+    },
+    [notify]
+  );
+
   const handleDemoAccess = useCallback(
     (event) => {
       event.preventDefault();
@@ -276,10 +380,6 @@ export default function Nexora() {
   const openSignUp = useCallback(() => openAuth('signup'), [openAuth]);
   const closeTradeReview = useCallback(() => setTradeReviewOpen(false), []);
   const closeAuth = useCallback(() => setAuthOpen(false), []);
-  const showDemoNotice = useCallback(
-    () => notify('success', 'Este historial solo existe en tu sesión de demostración.'),
-    [notify]
-  );
 
   return (
     <div className="nx-app">
@@ -290,6 +390,8 @@ export default function Nexora() {
         onNavigate={goTo}
         isDemoConnected={isDemoConnected}
         onOpenAuth={openSignIn}
+        onSignOut={handleSignOut}
+        onOpenGuide={openGuide}
       />
 
       <main>
@@ -309,7 +411,7 @@ export default function Nexora() {
           usdCopRate={usdCopRate}
         />
 
-        <TickerStrip coins={topCoins} onSelectAsset={selectAsset} />
+        <TickerStrip coins={topCoins} onSelectAsset={selectAsset} dataSource={dataSource} />
 
         <MarketSection
           coins={coins}
@@ -341,7 +443,7 @@ export default function Nexora() {
           coin={selectedCoin}
           options={coinUniverse.length ? coinUniverse : coins}
           tradeType={tradeType}
-          onTradeTypeChange={setTradeType}
+          onTradeTypeChange={changeTradeType}
           amount={amount}
           onAmountChange={setAmount}
           onAssetChange={setSelectedId}
@@ -351,7 +453,8 @@ export default function Nexora() {
           availableBalance={trading.availableBalance}
           totalWithFee={trading.totalWithFee}
           error={trading.error}
-          hasAmount={trading.currentAmount > 0}
+          hasAmount={trading.hasInput}
+          onUseAll={fillWholeBalance}
           onReview={reviewTrade}
           canSubmit={trading.canSubmit}
         />
@@ -363,12 +466,13 @@ export default function Nexora() {
           cash={cash}
           onSelectAsset={selectAsset}
           onNavigate={goTo}
+          onReset={handleResetPortfolio}
         />
 
-        <ActivitySection activity={activity} onNavigate={goTo} onNotice={showDemoNotice} />
+        <ActivitySection activity={activity} onNavigate={goTo} />
       </main>
 
-      <Footer onNavigate={goTo} />
+      <Footer onNavigate={goTo} onOpenGuide={openGuide} />
       <MobileNav activeSection={activeSection} onNavigate={goTo} />
 
       <Toast toast={toast} onDismiss={dismissToast} />
@@ -386,6 +490,10 @@ export default function Nexora() {
           onConfirm={confirmTrade}
         />
       )}
+
+      {tourInvite && !tourOpen && <TourInvite onStart={openGuide} onDismiss={dismissInvite} />}
+
+      {tourOpen && <GuidedTour onFinish={finishGuide} />}
 
       {authOpen && (
         <AuthModal

@@ -11,7 +11,8 @@
     "test": "npm run test:unit && npm run test:render",
     "test:unit": "esbuild scripts/unit-tests.jsx --bundle --platform=node --format=cjs --packages=external --jsx=automatic --outfile=scripts/.unit-tests.cjs && node scripts/.unit-tests.cjs",
     "test:render": "esbuild scripts/render-smoke.jsx --bundle --platform=node --format=cjs --packages=external --jsx=automatic --outfile=scripts/.render-smoke.cjs && node scripts/.render-smoke.cjs",
-    "gen:aliases": "node scripts/gen-coin-aliases.cjs"
+    "gen:aliases": "node scripts/gen-coin-aliases.cjs",
+    "test:e2e": "vite build && node scripts/e2e.cjs"
   },
   "dependencies": {
     "lucide-react": "^0.469.0",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "playwright-core": "^1.49.1",
     "vite": "^5.4.11"
   }
 }
