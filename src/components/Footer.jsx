@@ -19,7 +19,7 @@ export function Footer({ onNavigate, onOpenGuide }) {
         <span>NEXORA</span>
       </a>
 
-      <p>El mercado cambia. Tu perspectiva también.</p>
+      <p className="nx-footer-tagline">El mercado cambia. Tu perspectiva también.</p>
 
       <nav className="nx-footer-links" aria-label="Enlaces del pie de página">
         <a

@@ -100,12 +100,14 @@ function MarketSectionImpl({
     <section className="nx-section nx-market-section" id="mercado" aria-labelledby="nx-market-title">
       <div className="nx-section-heading">
         <div>
-          <span className="nx-section-index">01 / DESCUBRIR</span>
+          <span className="nx-section-index">
+            <span className="nx-section-number">01</span> Descubrir
+          </span>
           <h2 id="nx-market-title">
             El mercado,
-            <br className="nx-mobile-break" /> en movimiento.
+            <br className="nx-mobile-break" /> <span>en movimiento.</span>
           </h2>
-          <p>
+          <p className="nx-section-lead">
             Precios y variaciones en pesos colombianos, actualizados desde el mercado global.
           </p>
         </div>
@@ -260,13 +262,15 @@ function MarketSectionImpl({
               <strong className="nx-aside-price">{formatCOP(selectedCoin.price)}</strong>
               <Change value={selectedCoin.change24h} />
               <div className="nx-aside-divider" aria-hidden="true" />
-              <div className="nx-aside-stat">
-                <span>Capitalización</span>
-                <b>{formatCOP(selectedCoin.marketCap)}</b>
-              </div>
-              <div className="nx-aside-stat">
-                <span>Volumen · 24 h</span>
-                <b>{formatCOP(selectedCoin.volume)}</b>
+              <div className="nx-aside-stats">
+                <div className="nx-aside-stat">
+                  <span>Capitalización</span>
+                  <b>{formatCOP(selectedCoin.marketCap)}</b>
+                </div>
+                <div className="nx-aside-stat">
+                  <span>Volumen · 24 h</span>
+                  <b>{formatCOP(selectedCoin.volume)}</b>
+                </div>
               </div>
               <button
                 className="nx-button nx-button-primary nx-aside-buy"

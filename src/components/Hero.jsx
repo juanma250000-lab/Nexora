@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import { Activity, ArrowRight, ArrowUpRight, ShieldCheck } from 'lucide-react';
-import { formatCOP } from '../lib/format';
+import { formatCOP, formatPercent } from '../lib/format';
 import { useCoinHistory } from '../hooks/useCoinHistory';
 import { ACCENT_COLOR, Change, CoinIcon, Sparkline } from './primitives';
 
@@ -81,7 +81,7 @@ function HeroImpl({
               {dayChangeCOP >= 0 ? '+' : ''}
               {formatCOP(dayChangeCOP)}
             </span>
-            <span className="nx-caption"> hoy · {portfolioChange.toFixed(2)}%</span>
+            <span className="nx-caption"> hoy · {formatPercent(portfolioChange)}</span>
           </p>
 
           <div className="nx-hero-chart">

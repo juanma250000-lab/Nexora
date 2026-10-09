@@ -1,5 +1,5 @@
 import { memo, useId, useMemo, useState } from 'react';
-import { pricePath } from '../lib/format';
+import { formatPercent, pricePath } from '../lib/format';
 
 // Literal colours: SVG presentation attributes are not reliably able to
 // resolve CSS custom properties across browsers.
@@ -69,7 +69,7 @@ export const Sparkline = memo(function Sparkline({ coin, large = false, tone, em
 export const Change = memo(function Change({ value, className = '' }) {
   const safe = Number.isFinite(value) ? value : 0;
   const rising = safe >= 0;
-  const text = `${Math.abs(safe).toFixed(2)}%`;
+  const text = formatPercent(Math.abs(safe));
 
   return (
     <span className={`nx-change ${rising ? 'is-up' : 'is-down'} ${className}`.trim()}>

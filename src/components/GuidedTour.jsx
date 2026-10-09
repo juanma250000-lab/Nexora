@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Compass, X } from 'lucide-react';
 import { useDialog } from '../hooks/useDialog';
 import { scrollBehavior } from '../lib/format';
 import { TOUR_STEPS } from '../lib/tourSteps';
@@ -273,6 +273,9 @@ export function GuidedTour({ onFinish, steps = TOUR_STEPS }) {
 export function TourInvite({ onStart, onDismiss }) {
   return (
     <aside className="nx-tour-invite" aria-label="Guía de uso">
+      <span className="nx-tour-invite-icon" aria-hidden="true">
+        <Compass size={19} />
+      </span>
       <p>
         <b>¿Primera vez en NEXORA?</b>
         <span>Haz un recorrido de un minuto por las funciones principales.</span>

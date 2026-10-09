@@ -44,6 +44,17 @@ p {
   margin: 0;
 }
 
+/* Progressive typography: balanced headings, no orphans in body copy. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
 button,
 input,
 select,

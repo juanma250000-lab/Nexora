@@ -26,7 +26,7 @@ import { MARKET_ERROR_MESSAGES, nextRetryDelay, parseRetryAfter } from '../src/l
 import { canonicalCoinId, COIN_ID_ALIASES } from '../src/lib/coinAliases.js';
 import { PAGE_SIZE, REFRESH_MS, resolveNavFromSection } from '../src/lib/constants.js';
 import { mergeCoins } from '../src/lib/collections.js';
-import { formatClock, formatCOP, formatCrypto, parseAmount, pricePath, toLowerCaseLocale } from '../src/lib/format.js';
+import { formatClock, formatCOP, formatCrypto, formatPercent, parseAmount, pricePath, toLowerCaseLocale } from '../src/lib/format.js';
 import { useTrading } from '../src/hooks/useTrading.js';
 import { validateDemoAccess } from '../src/components/AuthModal.jsx';
 import { TOUR_STEPS } from '../src/lib/tourSteps.js';
@@ -746,6 +746,16 @@ test('los formateadores no producen NaN ni undefined', () => {
   // conservan porque ambas partes de la comparación pasan por la misma rutina.
   assertEqual(toLowerCaseLocale('  ÁvAl  '.trim()), 'ával', 'normalización de búsqueda');
   assertEqual(formatClock(null), 'Esperando cotizaciones', 'reloj sin fecha');
+});
+
+test('formatPercent escribe porcentajes al estilo colombiano', () => {
+  // Coma decimal y espacio no separable, como «Comisión · 0,1 %».
+  assertEqual(formatPercent(2.25), '2,25 %', 'dos decimales');
+  assertEqual(formatPercent(54.333, 1), '54,3 %', 'un decimal');
+  assertEqual(formatPercent(-12.5), '-12,50 %', 'negativo');
+  assertEqual(formatPercent(-0.004), '0,00 %', 'un cero negativo no se anuncia como pérdida');
+  assertEqual(formatPercent(Number.NaN), '0,00 %', 'NaN');
+  assertEqual(formatPercent(undefined, 1), '0,0 %', 'undefined');
 });
 
 /* ------------------------------------------------------------------ *

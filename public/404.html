@@ -7,7 +7,16 @@
     <meta name="theme-color" content="#070a11" />
     <title>Página no encontrada | NEXORA</title>
     <style>
-      :root { color-scheme: dark; }
+      /* Self-contained on purpose: a static host serves this page on its own,
+         so it repeats the few NEXORA tokens it needs instead of loading the app. */
+      :root {
+        color-scheme: dark;
+        --bg: #06080d;
+        --ink: #f3f6fb;
+        --muted: #9ba7ba;
+        --mint: #7df0cb;
+        --line: rgba(196, 216, 240, 0.15);
+      }
       * { box-sizing: border-box; }
       body {
         display: grid;
@@ -15,37 +24,78 @@
         margin: 0;
         place-items: center;
         padding: 24px 16px;
-        background: #06080d;
-        color: #f2f5fa;
+        background:
+          radial-gradient(48% 42% at 76% 12%, rgba(34, 128, 140, 0.24), transparent 72%),
+          radial-gradient(40% 36% at 10% 24%, rgba(62, 98, 170, 0.16), transparent 72%),
+          var(--bg);
+        color: var(--ink);
         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       }
       main {
-        width: min(440px, 100%);
-        padding: 32px 28px;
-        border: 1px solid rgba(196, 216, 240, 0.16);
-        border-radius: 18px;
-        background: linear-gradient(150deg, rgba(33, 47, 68, 0.86), rgba(12, 18, 29, 0.82));
+        position: relative;
+        width: min(460px, 100%);
+        padding: 36px 30px 32px;
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        background:
+          radial-gradient(70% 40% at 50% 0%, rgba(125, 240, 203, 0.1), transparent 70%),
+          linear-gradient(160deg, rgba(31, 45, 66, 0.94), rgba(13, 20, 31, 0.96) 62%);
+        box-shadow: 0 44px 90px -30px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.08);
         text-align: center;
       }
-      small { color: #7df0cb; font-family: ui-monospace, monospace; letter-spacing: 0.14em; }
-      h1 { margin: 12px 0 8px; font-size: 28px; }
-      p { margin: 0 0 24px; color: #96a2b6; line-height: 1.6; }
+      .mark {
+        display: flex;
+        width: 44px;
+        height: 44px;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        margin: 0 auto 20px;
+        border: 1px solid rgba(125, 240, 203, 0.62);
+        border-radius: 12px;
+        background: linear-gradient(145deg, rgba(125, 240, 203, 0.28), rgba(89, 127, 183, 0.14));
+        box-shadow: inset 0 1px rgba(255, 255, 255, 0.26), 0 0 28px rgba(125, 240, 203, 0.2);
+        transform: rotate(-8deg);
+      }
+      .mark i { display: block; width: 4px; border-radius: 4px; background: var(--mint); transform: skew(-22deg); }
+      .mark i:nth-child(1) { height: 13px; opacity: 0.68; }
+      .mark i:nth-child(2) { height: 22px; }
+      .mark i:nth-child(3) { height: 17px; opacity: 0.8; }
+      small {
+        display: inline-block;
+        padding: 4px 12px;
+        border: 1px solid rgba(125, 240, 203, 0.3);
+        border-radius: 999px;
+        background: rgba(125, 240, 203, 0.1);
+        color: var(--mint);
+        font-family: ui-monospace, 'Cascadia Code', monospace;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+      }
+      h1 { margin: 16px 0 10px; font-size: 30px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; }
+      p { margin: 0 0 28px; color: var(--muted); line-height: 1.65; }
       a {
         display: inline-flex;
-        min-height: 46px;
+        min-height: 48px;
         align-items: center;
-        padding: 0 20px;
-        border-radius: 9px;
+        padding: 0 22px;
+        border: 1px solid rgba(214, 255, 236, 0.55);
+        border-radius: 12px;
         background: linear-gradient(115deg, #a3edce, #b8f4d5 58%, #c7f2b5);
+        box-shadow: 0 12px 30px -10px rgba(96, 214, 175, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.7);
         color: #08201a;
         font-weight: 700;
         text-decoration: none;
+        transition: transform 140ms ease, box-shadow 220ms ease;
       }
-      a:focus-visible { outline: 2px solid #7df0cb; outline-offset: 3px; }
+      a:hover { box-shadow: 0 18px 40px -12px rgba(96, 214, 175, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.8); transform: translateY(-1px); }
+      a:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
+      @media (prefers-reduced-motion: reduce) { a { transition: none; } a:hover { transform: none; } }
     </style>
   </head>
   <body>
     <main>
+      <span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>
       <small>ERROR 404</small>
       <h1>Esta página no existe.</h1>
       <p>Puede que el enlace esté mal escrito o que la dirección haya cambiado. Todo NEXORA vive en su página principal.</p>
